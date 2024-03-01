@@ -1,0 +1,132 @@
+# SGXv2 Join Benchmarks derived from TeeBench
+
+This directory contains a stripped-down and enhanced version of [TEEBench](https://github.com/agora-ecosystem/tee-bench)
+by Maliszewski et al. We used this code for benchmarking joins in SGXv2.
+
+## Main Changes from Original TEEBench
+
+- Removed memory access oblivious joins, FHE joins, sealing joins, 3-way joins, grace, MC, and stitch join
+- Removed single-threaded radix join
+- Removed PCM, functionality based on custom SGX driver, and functionality based on custom SGX SDK
+- Removed paper PDF
+- Removed TEEBench experiment Scripts
+- Changed the build system to CMake and restructured the whole repository into libraries
+- Integrated [CrkJoin](https://github.com/kai-chi/CrkJoin) into this version of TEEBench
+- Added a TPC-H library and with TPC-H queries using SIMD scans and the RHO join
+- Replaced the mechanism for result materialization in TEEBench (one linked list per thread, one malloc per row) with a 
+  more performant mechanism (table consisting of 16 kB chunks).
+- Removed RHO_atomic
+- Radix joins now use boost::lockfree::queue by default
+- Made number of radix bits in radix joins dynamic
+- Implemented unrolling and instruction reordering in radix and hash joins
+- Added compile time options controlling the partitioning behavior of radix joins
+- Replaced pthreads barrier implementation with a barrier using busy waiting on atomics
+- Added more fine-grained time measurements for different join phases
+- Added time measurements via rdtscp instead of OCALLs
+- Added PerfEvent as hardware performance counter measurement tool
+- Added -march=native to compile options
+- Added [x86 simd sort](https://github.com/intel/x86-simd-sort) to RSM
+- Added SGXv2 experiment scripts
+
+## Prerequisites
+
+- Intel SGX SDK for Linux (tested with version 2.21)
+- Intel SGX PSW for Linux (tested with version 2.21)
+- Linux OS (tested with Ubuntu 22.04.3 LTS, Kernel 6.5)
+- Dependencies: cmake, make or ninja, GCC and G++ 12, Python 3, pip, Git
+- Python packages: pandas matplotlib seaborn
+- For full query experiments: TPC-H `.tbl` files in `data/scale###` where `###` is the scale factor with leading zeros.
+
+## How to run the experiments?
+
+1. Make sure you have all dependencies, especially the Intel SGX SDK, installed and enabled on your machine
+2. Go to `SGXv2Scipts`
+3. Run any of the scripts with the `run` parameter. The script will compile the code and run TEEBench. The results will 
+   be in `data` and the figures in `img`. In order to not measure the effects of Hyper-Threading or NUMA, we pinned all
+   experiments to one NUMA node. Example: `numactl --physcpubind=0-15 --membind=0 -- python3 paper-0-intro.py run`. The
+   NUMA experiment was pinned to the first 32 cores: `numactl --physcpubind=0-31 -- python3 paper-4-rho-numa.py run`
+
+For the full query experiments (`paper-8-full-query-optimization-impact`), the TPC-H tables must be converted to binary
+format:
+
+1. First make sure you have the required TPC-H `.tbl` files for scale factors 1 and 10 in `data/scale###` where `###` is
+   the scale factor with leading zeros.
+2. Then compile the CSV to binary converter:
+```shell
+/usr/bin/cmake --build cmake-build-release --target csv_convert
+```
+2. Then run the converter script to the binary. This creates the binary tables for scale factor 1 and 10
+```shell
+cd cmake-build-release && ./create_binary_tables.sh
+```
+
+## Compilation
+
+The project uses CMAKE as build tool. There are 4 main targets:
+
+1. `teebench` compiles TEEBench for benchmarking joins inside the SGX enclave
+2. `native` compiles TEEBench for benchmarking joins outside the enclave
+3. `tpch` compiles the TPC-H queries for benchmarking them inside the SGX enclave
+4. `tpch-native` compiles the TPC-H queries for benchmarking them outside the enclave
+
+To configure the build, use the following command, where FLAGS is a list of compile flags (see below) separated by 
+semicolons and CPMS is the number of CPU cycles per microsecond of you CPU (2900 by default). ENCLAVE_CONFIG_FILE can be
+replaced with another configuration if more memory is required.
+
+```shell
+cmake -DCMAKE_C_COMPILER=gcc-12 -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release -DCFLAGS="FLAGS" -DCPMS=CPMS \
+-DENCLAVE_CONFIG_FILE=Enclave/Enclave.config.xml -B cmake-build-release
+```
+
+To build one of the targets, use
+```shell
+cmake --build cmake-build-release --target "TARGET"
+```
+This creates a binary named cmake-build-release/"TARGET"
+
+### Important Compile Flags
+
+These flags can be set during the compilation process via the CMAKE option CFLAGS:
+
+* `UNROLL` - activates unrolling optimization in radix joins
+* `MUTEX_QUEUE` - replaces the lock-free queue used in the radix join implementation with the mutex-protected queue from
+  TEEBench
+* `CONSTANT_RADIX_BITS` - forces usage of 14 radix bits independent of table sizes. Recreates the original behavior of
+  TEEBench implementation and forces contention on the task queue.
+* `FORCE_2_PHASES` - forces 2-phase radix partitioning, although one phase would suffice used by default in paper
+  experiments
+* `CHUNKED_TABLE` - replaces the linked list output of the joins with a table consisting of chunks. Default in the paper
+* `SIMD` - activates multi-thread SIMD scans in the TPC-H implementations. Default in the paper.
+
+## Execution
+
+### Important command line arguments for TEEBench
+
+The currently working list of command line arguments:
+
+* `-a` - join algorithm name. Tested working: `CHT`, `PHT`, `MWAY`, `RHO`, `RHT`, `RSM`, `INL`. Default: `RHO`
+* `-n` - number of threads used to execute the join algorithm. Default: `2`
+* `-r` - number of tuples of R relation. Default: `2097152`. R is hashed
+* `-s` - number of tuples of S relation. Default: `2097152`. S is probed
+* `-x` - size of R in MBs. Default: `none`
+* `-y` - size of S in MBs. Default: `none`
+
+The currently working list of command line flags:
+
+* `-m` - materialize output tables. Default: `false`
+
+### Important command line arguments for TPC-H
+
+The currently working list of command line arguments:
+
+* `-a` - join algorithm name. Tested working: `CHT`, `PHT`, `MWAY`, `RHO`, `RHT`, `RSM`, `INL`. Default: `RHO`
+* `-n` - number of threads used to execute the join algorithm. Default: `2`
+* `-q` - Query to execute. One of `3`, `10`, `12`, `19`
+* `-s` - Scale factor
+
+## Links
+
+- [TEEBench Publication](https://dl.acm.org/doi/10.14778/3494124.3494146)
+- [TeeBench Repository](https://github.com/agora-ecosystem/tee-bench)
+- [Crkjoin Publication](https://dl.acm.org/doi/10.14778/3598581.3598602)
+- [CrkJoin Repository](https://github.com/kai-chi/CrkJoin)

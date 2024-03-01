@@ -1,0 +1,2 @@
+add_library(perf_event INTERFACE)
+target_include_directories(perf_event INTERFACE include)

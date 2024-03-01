@@ -1,0 +1,31 @@
+enclave {
+    untrusted {
+        void ocall_get_system_micros([out] uint64_t* t);
+
+        void ocall_startTimer([in, out] uint64_t* t);
+
+        void ocall_stopTimer([in, out] uint64_t* t);
+
+        void ocall_start_performance_counters();
+
+        void ocall_stop_performance_counters(uint64_t scale_factor, [in, string] const char * phase);
+
+        void ocall_exit(int exit_status);
+
+        void ocall_throw([in, string] const char* message);
+
+        int ocall_get_num_active_threads_in_numa(int numaregionid);
+
+        int ocall_get_thread_index_in_numa(int logicaltid);
+
+        int ocall_get_cpu_id(int thread_id);
+
+        int ocall_get_num_numa_regions();
+
+        void ocall_numa_thread_mark_active(int phytid);
+
+        void ocall_pin_thread(int tid);
+
+        void ocall_set_mask(uint64_t min_cid, uint64_t max_cid);
+    };
+};

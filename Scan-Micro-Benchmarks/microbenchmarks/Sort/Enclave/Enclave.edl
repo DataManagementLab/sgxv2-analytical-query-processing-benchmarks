@@ -1,0 +1,21 @@
+enclave {
+    from "sgx_tstdc.edl" import *; // make ported stdc library available inside enclave
+
+    trusted {
+        /* define ECALLs here. */
+        public void ecall_noop();
+        public void ecall_init_data(size_t num_elements);
+        public void ecall_next_num_elements(size_t num_elements);
+        public void ecall_sort(size_t num_elements, [user_check] uint64_t *sort_cycle_counter);
+        public void ecall_sort_user_check([user_check] uint64_t * o_data, size_t num_elements, [user_check] uint64_t * sort_cycle_counter);
+        public void ecall_free_preload_data();
+    };
+
+    untrusted {
+        /* define OCALLs here. */
+        void ocall_print_string([in, string] const char *str);
+        void ocall_print_error([in, string] const char *str);
+    };
+};
+
+

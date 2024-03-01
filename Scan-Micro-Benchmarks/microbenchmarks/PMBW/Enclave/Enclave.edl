@@ -1,0 +1,55 @@
+enclave {
+    from "sgx_tstdc.edl" import *; // make ported stdc library available inside enclave
+    from "sgx_pthread.edl" import *;
+    struct result_struct {
+        char *funcname;
+        int nthreads;
+        uint64_t areasize;
+        uint64_t threadsize;
+        uint64_t testsize;
+        uint64_t repeats;
+        uint64_t testvol;
+        uint64_t testaccess;
+        double runtime;
+        double bandwidth;
+        double rate;
+    };
+
+    struct gopt_parameters{
+        // filter of functions to run, set by command line
+        char** gopt_funcfilter;
+        size_t gopt_funcfilter_size;
+
+        // set default size limit: 0 -- 4 GiB
+        uint64_t gopt_sizelimit_min ;
+        uint64_t gopt_sizelimit_max;
+
+        // set memory limit
+        uint64_t g_memsize;
+
+        // lower and upper limit to number of threads
+        int gopt_nthreads_min;
+        int gopt_nthreads_max;
+
+        // exponentially increasing number of threads
+        int gopt_nthreads_exponential;
+
+        // option to test permutation cycle before measurement
+        int gopt_testcycle;
+
+        // number of physical cpus detected
+        int g_physical_cpus;
+    };
+
+    trusted {
+        /* define ECALLs here. */
+        public void ecall_main(struct gopt_parameters params);
+    };
+
+    untrusted {
+        /* define OCALLs here. */
+        void ocall_print_result([in, string] const char *name, struct result_struct result);
+        void ocall_print_string([in, string] const char *str);
+        void ocall_cpuid_detect([in, out, count=4] int *cpuid_op1);
+    };
+};
