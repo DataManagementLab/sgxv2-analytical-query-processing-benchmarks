@@ -41,10 +41,10 @@ by Maliszewski et al. We used this code for benchmarking joins in SGXv2.
 
 1. Make sure you have all dependencies, especially the Intel SGX SDK, installed and enabled on your machine
 2. Go to `SGXv2Scipts`
-3. Run any of the scripts with the `run` parameter. The script will compile the code and run TEEBench. The results will 
+3. Run any of the scripts with the `both` parameter. The script will compile the code and run TEEBench. The results will 
    be in `data` and the figures in `img`. In order to not measure the effects of Hyper-Threading or NUMA, we pinned all
-   experiments to one NUMA node. Example: `numactl --physcpubind=0-15 --membind=0 -- python3 paper-0-intro.py run`. The
-   NUMA experiment was pinned to the first 32 cores: `numactl --physcpubind=0-31 -- python3 paper-4-rho-numa.py run`
+   experiments to one NUMA node. Example: `numactl --physcpubind=0-15 --membind=0 -- python3 paper-0-intro.py both`. The
+   NUMA experiment was pinned to the first 32 cores: `numactl --physcpubind=0-31 -- python3 paper-4-rho-numa.py both`
 
 For the full query experiments (`paper-8-full-query-optimization-impact`), the TPC-H tables must be converted to binary
 format:
