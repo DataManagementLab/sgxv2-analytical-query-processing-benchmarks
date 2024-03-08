@@ -16,3 +16,7 @@ target_compile_features(radixpart PUBLIC cxx_std_17)
 target_compile_options(radixpart PRIVATE -falign-functions=1024)
 target_link_options(radixpart PRIVATE -falign-functions=1024)
 add_dependencies(radixpart radixpartenc-sign)
+
+configure_file(results/0_histogram.sh 0_histogram.sh
+        FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+        COPYONLY)

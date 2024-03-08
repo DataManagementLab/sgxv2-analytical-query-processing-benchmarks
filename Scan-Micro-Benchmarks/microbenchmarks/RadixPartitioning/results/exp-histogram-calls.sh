@@ -1,2 +1,0 @@
---unroll=false --repeat=1 --user_check=true --min_radix_bits=0 --max_radix_bits=12 --s=16777216 --min_num_keys_exp=30 --max_num_keys_exp=30
---unroll=true --repeat=1 --user_check=true --min_radix_bits=0 --max_radix_bits=12 --s=16777216 --min_num_keys_exp=30 --max_num_keys_exp=30

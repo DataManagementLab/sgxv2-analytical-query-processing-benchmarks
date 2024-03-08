@@ -18,7 +18,10 @@ target_link_options(pmbw PRIVATE -falign-functions=1024)
 target_link_libraries(pmbw perfevent shared_headers gflags)
 add_dependencies(pmbw pmbwenclave-sign)
 
-#set(SRCS_UNTRUSTED App/App_untrusted.cpp App/config.cpp)
-#add_executable(simd_untrusted ${SRCS_UNTRUSTED})
-#set_target_properties(simd_untrusted PROPERTIES COMPILE_FLAGS ${APP_CXX_FLAGS})
-#target_link_libraries(simd_untrusted  perfevent gflags)
+configure_file(results/0_pmbw_linear.sh 0_pmbw_linear.sh
+        FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+        COPYONLY)
+
+configure_file(results/1_pmbw_random.sh 1_pmbw_random.sh
+        FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+        COPYONLY)

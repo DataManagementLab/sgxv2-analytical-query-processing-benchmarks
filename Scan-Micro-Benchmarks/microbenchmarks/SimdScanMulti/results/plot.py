@@ -44,7 +44,7 @@ def plot_single_thread_lines(df: DataFrame, threads, mode):
 
 
 def paper_plot_cache_scan():
-    data = pd.read_csv("data/cache-new-big.csv", header=0, skipinitialspace=True)
+    data = pd.read_csv("data/single-thread.csv", header=0, skipinitialspace=True)
     data = data[data["numThreads"] == 1]
     data = data[data["writeMode"] == "bitvector"]
     data = data[data["entries"] >= 2 ** 12]
@@ -163,7 +163,7 @@ def plot_no_cache_scan():
 
 
 def paper_figure_multithreading():
-    data = pd.read_csv("data/scale-up-10.csv", header=0, skipinitialspace=True)
+    data = pd.read_csv("data/scale-up.csv", header=0, skipinitialspace=True)
     data = data[data["writeMode"] == "bitvector"]
     data["time"] = data["cpuCycles"] / data["reruns"] / CYCLES_PER_SECOND
     data["Scan Throughput in GiB/s"] = data["entries"] * data["numRuns"] / data["time"] / DATA_SIZE_UNIT
@@ -191,7 +191,7 @@ def paper_figure_multithreading():
 
 
 def paper_figure_write_rate():
-    data = pd.read_csv("data/write-rate-10.csv", header=0, skipinitialspace=True)
+    data = pd.read_csv("data/write-rate.csv", header=0, skipinitialspace=True)
     data = data[data["writeMode"] == "noindex"]
     data["time"] = data["cpuCycles"] / data["reruns"] / CYCLES_PER_SECOND
     data["Scan Throughput in GiB/s"] = data["entries"] * data["numRuns"] / data["time"] / DATA_SIZE_UNIT
@@ -220,17 +220,17 @@ def paper_figure_write_rate():
 
 
 def numa_absolute_values_2():
-    data = pd.read_csv("data/cross-numa-10.csv", header=0, skipinitialspace=True)
+    data = pd.read_csv("data/cross-numa.csv", header=0, skipinitialspace=True)
 
     data["time"] = data["cpuCycles"] / data["reruns"] / CYCLES_PER_SECOND
     data["Scan Throughput in GiB/s"] = data["entries"] * data["numRuns"] / data["time"] / DATA_SIZE_UNIT
     data["Setting"] = data["enclaveMode"] + data["dataLoading"] + data["numa"]
-    data["Setting"].replace({"enclavepreloadyes": "Enclave cross NUMA",
-                             "nativenoPreloadyes": "Plain CPU cross NUMA",
-                             "nativenoPreloadno": "Plain CPU local NUMA",},
+    data["Setting"].replace({"enclavepreloadyes": "Enclave cross-NUMA",
+                             "nativenoPreloadyes": "Plain CPU cross-NUMA",
+                             "nativenoPreloadno": "Plain CPU local-NUMA",},
                             inplace=True)
 
-    data = data[data["Setting"].isin(["Enclave cross NUMA", "Plain CPU cross NUMA", "Plain CPU local NUMA"])]
+    data = data[data["Setting"].isin(["Enclave cross-NUMA", "Plain CPU cross-NUMA", "Plain CPU local-NUMA"])]
     data["Threads"] = data["numThreads"]
 
     c_palette_1 = ["#D56257", "#8e8e8e", "#29292b", "#176582"]
@@ -242,7 +242,7 @@ def numa_absolute_values_2():
     plt.grid(axis='y')
 
     plot = sns.barplot(data, y="Scan Throughput in GiB/s", x="Threads", hue="Setting",
-                       hue_order=["Plain CPU local NUMA", "Plain CPU cross NUMA", "Enclave cross NUMA"],
+                       hue_order=["Plain CPU local-NUMA", "Plain CPU cross-NUMA", "Enclave cross-NUMA"],
                        errorbar="sd", palette=[sns.color_palette("deep")[0], sns.color_palette("deep")[3],
                                                sns.color_palette("deep")[2]])
 

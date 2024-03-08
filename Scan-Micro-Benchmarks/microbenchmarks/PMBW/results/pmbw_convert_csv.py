@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 
 import csv
-import argparse
 import os
+import sys
 
 
 def convert_to_csv(input_file, output_file=None):
@@ -50,14 +50,14 @@ def convert_to_csv(input_file, output_file=None):
 
 
 if __name__ == "__main__":
-    #parser = argparse.ArgumentParser(description="Convert space delimited key=value pairs in text files to CSV.")
-    #parser.add_argument("input_files", type=str, nargs="+", help="Input text files to convert.")
-    #args = parser.parse_args()
+    input_files = [f"data/pmbw_random_native_{n}.txt" for n in range(1, 11)]
+    input_files += [f"data/pmbw_random_enclave_{n}.txt" for n in range(1, 11)]
+    input_files += [f"data/pmbw_linear_native_{n}.txt" for n in range(1, 11)]
+    input_files += [f"data/pmbw_linear_enclave_{n}.txt" for n in range(1, 11)]
 
-    input_files = [f"data/pmbw_enclave_pointer_chasing_{n}.txt" for n in range(1, 11)]
-    input_files += [f"data/pmbw_native_pointer_chasing_{n}.txt" for n in range(1, 11)]
-    input_files += [f"data/pmbw_native_stats_large_{n}.txt" for n in range(1, 11)]
-    input_files += [f"data/pmbw_enclave_stats_large_{n}.txt" for n in range(1, 11)]
+    script_directory = os.path.dirname(os.path.abspath(sys.argv[0]))
+
+    input_files = [script_directory + '/' + input_file for input_file in input_files]
 
     for input_file in input_files:
         convert_to_csv(input_file)

@@ -434,12 +434,12 @@ def paper_figure_random_read(native_files, sgx_files):
 if __name__ == '__main__':
     # plot_scans('results/pmbw_native_stats_fixed.csv', 'results/pmbw_enclave_stats_fixed.csv',["ScanRead64PtrSimpleLoop"])
 
-    native_files = [f"data/pmbw_native_stats_large_{n}.csv" for n in range(1, 11)]
-    sgx_files = [f"data/pmbw_enclave_stats_large_{n}.csv" for n in range(1, 11)]
+    native_files = [f"data/pmbw_linear_native_{n}.csv" for n in range(1, 11)]
+    sgx_files = [f"data/pmbw_linear_enclave_{n}.csv" for n in range(1, 11)]
     paper_figure_linear_read_write_max_2_part(native_files, sgx_files)  # figure 6
 
-    native_files_pc = [f"data/pmbw_native_pointer_chasing_{n}.csv" for n in range(1, 11)]
-    sgx_files_pc = [f"data/pmbw_enclave_pointer_chasing_{n}.csv" for n in range(1, 11)]
+    native_files_pc = [f"data/pmbw_random_native_{n}.csv" for n in range(1, 11)]
+    sgx_files_pc = [f"data/pmbw_random_enclave_{n}.csv" for n in range(1, 11)]
     # paper_figure_random_read(native_files, sgx_files)  # figure 8
 
     paper_figure_random_access_mean(native_files_pc, sgx_files_pc, "write_area_increase")

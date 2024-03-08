@@ -109,7 +109,7 @@ GB = 10 ** 9
 DATA_SIZE_UNIT = GiB
 
 
-def paper_figure_random_write(file="write_big"):
+def paper_figure_random_write(file="write_area_increase"):
     X_AXIS_STRING = "Array Size"
     Y_AXIS_STRING = "Write Latency in ns"
     Z_AXIS_REL_STRING = "Rel. Latency"
@@ -255,14 +255,10 @@ def write_size_overhead(file="write_size_combined"):
 
 
 def paper_figure_increment():
-    data = pd.read_csv("data/increment-10.csv", header=0, skipinitialspace=True)
-
-    c_palette_1 = ["#D56257", "#8e8e8e", "#29292b", "#176582"]
-    c_palette_2 = ["#d56257", "#8e8e8e", "#2a9d8f", "#176582", "#264653"]
+    data = pd.read_csv("data/increment.csv", header=0, skipinitialspace=True)
 
     sns.set_style("ticks")
     sns.set_context("notebook")
-    sns.set_palette(sns.color_palette(c_palette_1))
 
     data["Runtime in s"] = data["timeMicroSec"] / 1000 / 1000
     data["Array Size"] = data["totalDataSize"]
@@ -326,16 +322,10 @@ def main():
     sns.set_context("notebook")
     sns.set_palette("deep")
 
-    file = "write_big"
-    # plot_measurements(file)
-    # write_comparison(file)
-    # write_overhead(file)
-    paper_figure_random_write(file)
-
-    file_size = "write_size"
-
-    # write_size_comparison(file_size)
-    # write_size_overhead(file_size)
+    paper_figure_random_write()
+    paper_figure_increment()
+    print("The plot script for random reads and writes is contained in PMBW.\n"
+          "Copy data/write_area_increase to PMBW/results/data and run PMBW/results/plot.py")
 
 
 if __name__ == '__main__':

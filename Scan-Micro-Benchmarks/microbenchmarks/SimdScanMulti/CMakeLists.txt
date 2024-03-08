@@ -14,15 +14,15 @@ target_compile_features(simdmulti PUBLIC cxx_std_17)
 add_dependencies(simdmulti simdmultienclave-sign)
 
 # Copy experiment run scripts to the binary directory and make them executable
-configure_file(benchmarks/0_single_thread.sh 0_single_thread.sh
+configure_file(results/0_single_thread.sh 0_single_thread.sh
         FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
         COPYONLY)
-configure_file(benchmarks/1_scale_up.sh 1_scale_up.sh
+configure_file(results/1_scale_up.sh 1_scale_up.sh
         FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
         COPYONLY)
-configure_file(benchmarks/2_write_rate.sh 2_write_rate.sh
+configure_file(results/2_write_rate.sh 2_write_rate.sh
         FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
         COPYONLY)
-configure_file(benchmarks/3_numa.sh 3_numa.sh
+configure_file(results/3_numa.sh 3_numa.sh
         FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
         COPYONLY)

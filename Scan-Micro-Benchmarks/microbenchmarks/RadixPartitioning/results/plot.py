@@ -151,7 +151,7 @@ def main():
     # for file in ["radix-bits"]:
     #     for measurement in ["timeMicroSec", "instructions", "L1D-misses", "L1I-misses", "LLC-misses", "branch-misses", "dTLB", "iTLB"]:
     #         plot_both(file, measurement)
-    paper_figure_histogram("histogram-10")
+    paper_figure_histogram("histogram")
     # paper_figure_partitioning("histogram-10")
 
 
