@@ -8,4 +8,3 @@ The code is structured into two directories. [Join-Benchmarks](Join-Benchmarks/R
 
 Please refer to the details in the sub-directories [Join-Benchmarks](Join-Benchmarks/README.md) and [Scan-Micro-Benchmarks](Scan-Micro-Benchmarks/README.md)
 
-This repository contains the exact code and gathered data that was used for the experimental evaluation in our paper. However, it is not yet polished for easy reproducability. Manual steps like copying files to correct directories might be required and the readme files for the benchmarks might be incomplete. We will improve the status over the next two weeks.

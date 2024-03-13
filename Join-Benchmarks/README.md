@@ -34,17 +34,21 @@ by Maliszewski et al. We used this code for benchmarking joins in SGXv2.
 - Intel SGX PSW for Linux (tested with version 2.21)
 - Linux OS (tested with Ubuntu 22.04.3 LTS, Kernel 6.5)
 - Dependencies: cmake, make or ninja, GCC and G++ 12, Python 3, pip, Git
-- Python packages: pandas matplotlib seaborn
+- Boost 1.84 installed in `/opt/boost_1_84_0`. [Download](https://www.boost.org/users/download/)
+- Python packages as defined in `requirements.txt`
 - For full query experiments: TPC-H `.tbl` files in `data/scale###` where `###` is the scale factor with leading zeros.
+  TPC-H dbgen is available [here](https://www.tpc.org/tpc_documents_current_versions/current_specifications5.asp).
 
-## How to run the experiments?
+## Run the Experiments
 
-1. Make sure you have all dependencies, especially the Intel SGX SDK, installed and enabled on your machine
-2. Go to `SGXv2Scipts`
-3. Run any of the scripts with the `both` parameter. The script will compile the code and run TEEBench. The results will 
-   be in `data` and the figures in `img`. In order to not measure the effects of Hyper-Threading or NUMA, we pinned all
-   experiments to one NUMA node. Example: `numactl --physcpubind=0-15 --membind=0 -- python3 paper-0-intro.py both`. The
-   NUMA experiment was pinned to the first 32 cores: `numactl --physcpubind=0-31 -- python3 paper-4-rho-numa.py both`
+1. Make sure you have all dependencies, especially the Intel SGX SDK, installed and enabled on your machine.
+2. Activate a Python environment that fulfills `requirements.txt`.
+3. Go to `SGXv2Scripts/scripts`.
+4. Run any of the scripts with the `both` parameter. The scripts compile the code with the required flags and run the 
+   required settings 10 times. The result csv files are stored in `data` and the figures in `img`. In order to not 
+   measure the effects of Hyper-Threading or NUMA, we pinned all experiments to one NUMA node. Example: 
+   `numactl --physcpubind=0-15 --membind=0 -- python3 paper-0-intro.py both`. The NUMA experiment was pinned to the 
+   first 32 cores: `numactl --physcpubind=0-31 -- python3 paper-4-rho-numa.py both`.
 
 For the full query experiments (`paper-8-full-query-optimization-impact`), the TPC-H tables must be converted to binary
 format:
@@ -53,12 +57,16 @@ format:
    the scale factor with leading zeros.
 2. Then compile the CSV to binary converter:
 ```shell
-/usr/bin/cmake --build cmake-build-release --target csv_convert
+cmake -DCMAKE_C_COMPILER=gcc-12 -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release -B cmake-build-release \
+&& cmake --build cmake-build-release --target csv_convert
 ```
 2. Then run the converter script to the binary. This creates the binary tables for scale factor 1 and 10
 ```shell
 cd cmake-build-release && ./create_binary_tables.sh
 ```
+
+The steps below are not required for reproducing the paper results, as they are done automatically by the experiment
+scripts. They are meant for documentation.
 
 ## Compilation
 
@@ -70,23 +78,28 @@ The project uses CMAKE as build tool. There are 4 main targets:
 4. `tpch-native` compiles the TPC-H queries for benchmarking them outside the enclave
 
 To configure the build, use the following command, where FLAGS is a list of compile flags (see below) separated by 
-semicolons and CPMS is the number of CPU cycles per microsecond of you CPU (2900 by default). ENCLAVE_CONFIG_FILE can be
-replaced with another configuration if more memory is required.
+semicolons and CPMS is the number of CPU cycles per microsecond of your CPU (2900 by default). ENCLAVE_CONFIG_FILE can
+be replaced with another configuration if more memory is required.
 
 ```shell
 cmake -DCMAKE_C_COMPILER=gcc-12 -DCMAKE_CXX_COMPILER=g++-12 -DCMAKE_BUILD_TYPE=Release -DCFLAGS="FLAGS" -DCPMS=CPMS \
 -DENCLAVE_CONFIG_FILE=Enclave/Enclave.config.xml -B cmake-build-release
 ```
 
+To build all targets, use
+```shell
+cmake --build cmake-build-release
+```
+
 To build one of the targets, use
 ```shell
-cmake --build cmake-build-release --target "TARGET"
+cmake --build cmake-build-release --target TARGET
 ```
-This creates a binary named cmake-build-release/"TARGET"
+This creates a binary named cmake-build-release/TARGET
 
 ### Important Compile Flags
 
-These flags can be set during the compilation process via the CMAKE option CFLAGS:
+These flags can be set during configuration via the CMAKE option CFLAGS:
 
 * `UNROLL` - activates unrolling optimization in radix joins
 * `MUTEX_QUEUE` - replaces the lock-free queue used in the radix join implementation with the mutex-protected queue from
@@ -97,6 +110,8 @@ These flags can be set during the compilation process via the CMAKE option CFLAG
   experiments
 * `CHUNKED_TABLE` - replaces the linked list output of the joins with a table consisting of chunks. Default in the paper
 * `SIMD` - activates multi-thread SIMD scans in the TPC-H implementations. Default in the paper.
+
+Example: `-DCFLAGS="SIMD;MUTEX_QUEUE"`
 
 ## Execution
 
@@ -122,7 +137,7 @@ The currently working list of command line arguments:
 * `-a` - join algorithm name. Tested working: `CHT`, `PHT`, `MWAY`, `RHO`, `RHT`, `RSM`, `INL`. Default: `RHO`
 * `-n` - number of threads used to execute the join algorithm. Default: `2`
 * `-q` - Query to execute. One of `3`, `10`, `12`, `19`
-* `-s` - Scale factor
+* `-s` - Scale factor. Make sure that you have the required tables in `data/scale###`
 
 ## Links
 

@@ -8,7 +8,7 @@ found inside the [microbenchmarks](microbenchmarks) directory.
 - Intel SGX PSW for Linux (tested with version 2.21)
 - Linux OS (tested with Ubuntu 22.04.3 LTS, Kernel 6.5)
 - Dependencies: cmake, GCC and G++ 12, Python 3, pip, Git
-- Python package as defined in `requirements.txt`
+- Python packages as defined in `requirements.txt`
 
 ## Build
 To build the code, run the following commands in the top-level directory:
