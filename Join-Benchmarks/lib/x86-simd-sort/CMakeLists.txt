@@ -1,0 +1,2 @@
+add_library(x86_simd_sort INTERFACE)
+target_include_directories(x86_simd_sort INTERFACE include simd-headers)

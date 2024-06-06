@@ -1,0 +1,34 @@
+enclave {
+    from "sgx_tstdc.edl" import *; // make ported stdc library available inside enclave
+
+    trusted {
+        /* define ECALLs here. */
+        public void ecall_noop();
+        public void ecall_init_data(size_t num_entries);
+        public void ecall_free_preload_data();
+        public void ecall_random_write(uint64_t mask, [in,out] uint64_t *cycle_counter);
+        public void ecall_random_write_user_check([user_check] void *plain_data, uint64_t mask,
+                                                  [in,out] uint64_t *cycle_counter);
+        public void ecall_random_write_unrolled(uint64_t mask, [in,out] uint64_t * cycle_counter);
+        public void ecall_random_write_unrolled_user_check([user_check] void *plain_data, uint64_t mask,
+                                                           [in,out] uint64_t *cycle_counter);
+        public void ecall_random_write_size(uint64_t mask, uint64_t write_size_byte, uint64_t repetitions,
+                                            [in,out] uint64_t *cycle_counter);
+        public void ecall_random_write_size_user_check([user_check] void *plain_data, uint64_t mask,
+                                                       uint64_t write_size_byte, uint64_t repetitions,
+                                                       [in,out] uint64_t *cycle_counter);
+        public void ecall_random_increment(uint64_t mask, [in,out] uint64_t *cycle_counter);
+        public void ecall_random_increment_user_check([user_check] void *plain_data, uint64_t mask,
+                                                      [in,out] uint64_t *cycle_counter);
+        public void ecall_random_read(uint64_t mask, [in,out] uint64_t *cycle_counter);
+        public void ecall_random_read_user_check([user_check] void *plain_data, uint64_t mask,
+                                                 [in,out] uint64_t *cycle_counter);
+        public void ecall_non_temporal_write(uint64_t data_size, [in,out] uint64_t *cycle_counter);
+    };
+
+    untrusted {
+        /* define OCALLs here. */
+        void ocall_print_string([in, string] const char *str);
+        void ocall_print_error([in, string] const char *str);
+    };
+};

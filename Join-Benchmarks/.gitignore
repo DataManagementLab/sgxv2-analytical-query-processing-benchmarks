@@ -1,0 +1,14 @@
+.idea/
+*.so
+**/*.o
+.config_HW_DEBUG_x64
+
+App/Enclave_u.*
+Enclave/Enclave_t.*
+.config_HW_PRERELEASE_x64
+*.pyc
+
+cmake-build-*
+
+data
+venv

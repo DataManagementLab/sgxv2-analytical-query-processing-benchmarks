@@ -1,0 +1,99 @@
+enclave {
+    from "sgx_tstdc.edl" import *; // make ported stdc library available inside enclave
+
+    trusted {
+        /* define ECALLs here. */
+        public void ecall_noop();
+
+        public void ecall_init_array(size_t data_size);
+        public void ecall_fill_and_shuffle_array(size_t data_size, uint32_t num_keys, int int_mode, int use_64_bit);
+        public void ecall_alloc_out_array(uint64_t num_bins);
+        public void ecall_reset_out_array(uint64_t num_bins);
+
+        public void ecall_init_data(size_t data_size);
+        public void ecall_fill_and_shuffle(size_t data_size, uint32_t num_keys);
+        public void ecall_alloc_hist(uint64_t num_bins);
+        public void ecall_reset_hist(uint64_t num_bins);
+
+        public void ecall_next_num_keys(size_t data_size, uint32_t num_keys, uint64_t radix_bits);
+        public void ecall_init_partitioned_buffer(size_t data_size, uint64_t radix_bits, uint32_t padding);
+
+        public void ecall_cumsum_hist(uint64_t radix_bits, uint32_t padding);
+        public void ecall_array_dynamic([user_check] const void *param_void_pointer,
+                                        [user_check] uint64_t *cycle_counter);
+        public void ecall_histogram_dynamic([user_check] const void * param_void_pointer,
+                                            [user_check] uint64_t *cycle_counter);
+        public void ecall_partition_dynamic([user_check] void * o_data,
+                                        size_t data_size,
+                                        [user_check] uint32_t * outside_sum_hist,
+                                        [user_check] void * o_partitioned,
+                                        uint64_t radix_bits,
+                                        uint64_t shift,
+                                        [user_check] uint64_t *copy_cycle_counter,
+                                        uint32_t unroll_factor,
+                                        uint8_t preload, uint8_t mode);
+        public void ecall_histogram(size_t data_size,
+                                         uint64_t radix_bits,
+                                         uint64_t shift,
+                                         [user_check] uint64_t * hist_cycle_counter);
+        public void ecall_histogram_unrolled(size_t data_size,
+                                                  uint64_t radix_bits,
+                                                  uint64_t shift,
+                                                  [user_check] uint64_t * hist_cycle_counter);
+        public void ecall_histogram_simd(size_t data_size,
+                                                          uint64_t radix_bits,
+                                                          uint64_t shift,
+                                                          [user_check] uint64_t * hist_cycle_counter);
+        public void ecall_histogram_loop(size_t data_size,
+                                         uint64_t radix_bits,
+                                         uint64_t shift,
+                                         [user_check] uint64_t * hist_cycle_counter);
+        public void ecall_histogram_user_check([user_check] void * data,
+                                                    size_t data_size,
+                                                    [user_check] void * hist,
+                                                    uint64_t radix_bits,
+                                                    uint64_t shift,
+                                                    [user_check] uint64_t * hist_cycle_counter);
+        public void ecall_histogram_user_check_unrolled([user_check] void * data,
+                                                            size_t data_size,
+                                                            [user_check] void * hist,
+                                                            uint64_t radix_bits,
+                                                            uint64_t shift,
+                                                            [user_check] uint64_t * hist_cycle_counter);
+        public void ecall_partition(size_t data_size,
+                                    uint64_t radix_bits,
+                                    uint64_t shift,
+                                    [user_check] uint64_t * copy_cycle_counter);
+        public void ecall_partition_user_check([user_check] void * o_data,
+                                        size_t data_size,
+                                        [user_check] uint32_t * outside_sum_hist,
+                                        [user_check] void * o_partitioned,
+                                        uint64_t radix_bits,
+                                        uint64_t shift,
+                                        [user_check] uint64_t *copy_cycle_counter);
+        public void ecall_partition_unrolled(size_t data_size,
+                                             uint64_t radix_bits,
+                                             uint64_t shift,
+                                             [user_check] uint64_t * copy_cycle_counter);
+        public void ecall_partition_user_check_unrolled([user_check] void * o_data, size_t data_size,
+                                                        [user_check] uint32_t * outside_sum_hist,
+                                                        [user_check] void * o_partitioned, uint64_t mask, uint64_t shift,
+                                                        [user_check] uint64_t *copy_cycle_counter);
+        public void ecall_run_benchmark(size_t data_size,
+                                        uint64_t radix_bits,
+                                        uint64_t shift,
+                                        uint32_t padding,
+                                        [in,out] uint64_t * hist_cycle_counter,
+                                        [in,out] uint64_t * copy_cycle_counter);
+        public void ecall_free_preload_hist();
+        public void ecall_free_preload_data();
+    };
+
+    untrusted {
+        /* define OCALLs here. */
+        void ocall_print_string([in, string] const char *str);
+        void ocall_print_error([in, string] const char *str);
+    };
+};
+
+
