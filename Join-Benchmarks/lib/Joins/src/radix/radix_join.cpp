@@ -94,10 +94,16 @@ struct task_t {
 struct radix_timers_t {
     uint64_t partitioning_total_timer;
     uint64_t partitioning_pass_1_timer;
-    uint64_t partitioning_hist_timer;
-    uint64_t partitioning_copy_timer;
+    uint64_t partitioning_pass_1_r_timer;
+    uint64_t partitioning_pass_1_s_timer;
+    uint64_t partitioning_pass_1_hist_timer;
+    uint64_t partitioning_pass_1_copy_timer;
     uint64_t partitioning_pass_2_timer;
-    uint64_t join_timer;
+    uint64_t partitioning_pass_2_hist_timer;
+    uint64_t partitioning_pass_2_copy_timer;
+    uint64_t join_total_timer;
+    uint64_t build_in_depth_timer;
+    uint64_t join_in_depth_timer;
     uint64_t total_timer;
 };
 
@@ -139,12 +145,6 @@ struct arg_t_radix {
     int32_t parts_joined;
     int32_t parts_partitioned;
     radix_timers_t timers;
-    uint64_t build_in_depth_timer;
-    uint64_t join_in_depth_timer;
-    uint64_t hist_timer;
-    uint64_t copy_timer;
-    uint64_t hist_in_depth_timer;
-    uint64_t copy_in_depth_timer;
 
     /* results of the thread */
     int materialize;
@@ -219,11 +219,7 @@ void print_timing(const radix_timers_t &timers,
                   uint64_t start,
                   uint64_t end,
                   uint64_t num_tuples,
-                  int64_t result,
-                  uint64_t build_in_depth,
-                  uint64_t join_in_depth,
-                  uint64_t hist_in_depth,
-                  uint64_t copy_in_depth) {
+                  int64_t result) {
     double cycles_per_tuple = (double) timers.total_timer / (double) num_tuples;
     uint64_t join_runtime_mus = timers.total_timer / CPMS;
     uint64_t total_runtime_mus = (end - start) / CPMS;
@@ -233,21 +229,21 @@ void print_timing(const radix_timers_t &timers,
     logger(INFO, "Total Join Time (cycles)    : %lu", timers.total_timer);
     logger(INFO, "Partition Overall (cycles)  : %lu", timers.partitioning_total_timer);
     logger(INFO, "Partition Pass One (cycles) : %lu", timers.partitioning_pass_1_timer);
-    logger(INFO, "Partition R        (cycles) : %lu", timers.partitioning_hist_timer);
-    logger(INFO, "Partition S        (cycles) : %lu", timers.partitioning_copy_timer);
+    logger(INFO, "Partition R        (cycles) : %lu", timers.partitioning_pass_1_r_timer);
+    logger(INFO, "Partition S        (cycles) : %lu", timers.partitioning_pass_1_s_timer);
     logger(INFO, "Partition Pass Two (cycles) : %lu", timers.partitioning_pass_2_timer);
-    logger(INFO, "Partition Two Hist (cycles) : %lu", hist_in_depth);
-    logger(INFO, "Partition Two Copy (cycles) : %lu", copy_in_depth);
-    logger(INFO, "Build+Join Overall (cycles) : %lu", timers.join_timer);
-    logger(INFO, "Build (cycles)              : %lu", build_in_depth);
-    logger(INFO, "Join (cycles)               : %lu", join_in_depth);
+    logger(INFO, "Partition Two Hist (cycles) : %lu", timers.partitioning_pass_2_hist_timer);
+    logger(INFO, "Partition Two Copy (cycles) : %lu", timers.partitioning_pass_2_copy_timer);
+    logger(INFO, "Build+Join Overall (cycles) : %lu", timers.join_total_timer);
+    logger(INFO, "Build (cycles)              : %lu", timers.build_in_depth_timer);
+    logger(INFO, "Join (cycles)               : %lu", timers.join_in_depth_timer);
     logger(INFO, "Cycles-per-tuple            : %.4lf", cycles_per_tuple);
     logger(INFO, "Cycles-per-tuple-partition  : %.4lf", (double) timers.partitioning_total_timer / num_tuples);
     logger(INFO, "Cycles-per-tuple-partitioning_pass_1_timer     : %.4lf",
            (double) timers.partitioning_pass_1_timer / num_tuples);
     logger(INFO, "Cycles-per-tuple-partitioning_pass_2_timer     : %.4lf",
            (double) timers.partitioning_pass_2_timer / num_tuples);
-    logger(INFO, "Cycles-per-tuple-join      : %.4lf", (double) timers.join_timer / num_tuples);
+    logger(INFO, "Cycles-per-tuple-join      : %.4lf", (double) timers.join_total_timer / num_tuples);
     logger(INFO, "Pure Join Runtime (us) : %lu ", join_runtime_mus);
     logger(INFO, "Throughput (M rec/sec) : %.2lf", throughput);
     logger(INFO, "Total Runtime (us)     : %lu ", total_runtime_mus);
@@ -258,10 +254,6 @@ void print_timing(const radix_timers_t &timers,
                   uint64_t end,
                   uint64_t num_tuples,
                   int64_t result,
-                  uint64_t build_in_depth,
-                  uint64_t join_in_depth,
-                  uint64_t hist_in_depth,
-                  uint64_t copy_in_depth,
              uint64_t preparation_time, uint64_t join_time, uint64_t free_time) {
     double cycles_per_tuple = (double) timers.total_timer / (double) num_tuples;
     uint64_t join_runtime_mus = timers.total_timer / CPMS;
@@ -275,21 +267,23 @@ void print_timing(const radix_timers_t &timers,
     logger(INFO, "Total Join Time (cycles)    : %lu", timers.total_timer);
     logger(INFO, "Partition Overall (cycles)  : %lu", timers.partitioning_total_timer);
     logger(INFO, "Partition Pass One (cycles) : %lu", timers.partitioning_pass_1_timer);
-    logger(INFO, "Partition R        (cycles) : %lu", timers.partitioning_hist_timer);
-    logger(INFO, "Partition S        (cycles) : %lu", timers.partitioning_copy_timer);
+    logger(INFO, "Partition R        (cycles) : %lu", timers.partitioning_pass_1_r_timer);
+    logger(INFO, "Partition S        (cycles) : %lu", timers.partitioning_pass_1_s_timer);
+    logger(INFO, "Partition One Hist (cycles) : %lu", timers.partitioning_pass_1_hist_timer);
+    logger(INFO, "Partition One Copy (cycles) : %lu", timers.partitioning_pass_1_copy_timer);
     logger(INFO, "Partition Pass Two (cycles) : %lu", timers.partitioning_pass_2_timer);
-    logger(INFO, "Partition Two Hist (cycles) : %lu", hist_in_depth);
-    logger(INFO, "Partition Two Copy (cycles) : %lu", copy_in_depth);
-    logger(INFO, "Build+Join Overall (cycles) : %lu", timers.join_timer);
-    logger(INFO, "Build (cycles)              : %lu", build_in_depth);
-    logger(INFO, "Join (cycles)               : %lu", join_in_depth);
+    logger(INFO, "Partition Two Hist (cycles) : %lu", timers.partitioning_pass_2_hist_timer);
+    logger(INFO, "Partition Two Copy (cycles) : %lu", timers.partitioning_pass_2_copy_timer);
+    logger(INFO, "Build+Join Overall (cycles) : %lu", timers.join_total_timer);
+    logger(INFO, "Build (cycles)              : %lu", timers.build_in_depth_timer);
+    logger(INFO, "Join (cycles)               : %lu", timers.join_in_depth_timer);
     logger(INFO, "Cycles-per-tuple            : %.4lf", cycles_per_tuple);
     logger(INFO, "Cycles-per-tuple-partition  : %.4lf", (double) timers.partitioning_total_timer / num_tuples);
     logger(INFO, "Cycles-per-tuple-partitioning_pass_1_timer     : %.4lf",
            (double) timers.partitioning_pass_1_timer / num_tuples);
     logger(INFO, "Cycles-per-tuple-partitioning_pass_2_timer     : %.4lf",
            (double) timers.partitioning_pass_2_timer / num_tuples);
-    logger(INFO, "Cycles-per-tuple-join      : %.4lf", (double) timers.join_timer / num_tuples);
+    logger(INFO, "Cycles-per-tuple-join      : %.4lf", (double) timers.join_total_timer / num_tuples);
     logger(INFO, "Pure Join Runtime (us) : %lu ", join_runtime_mus);
     logger(INFO, "Preparation Time (us) : %lu ", preparation_time);
     logger(INFO, "Join time arg + join time (us) : %lu ", join_time);
@@ -1115,7 +1109,7 @@ prj_thread(void *param) {
     args->timers.total_timer = current_time;
     args->timers.partitioning_total_timer = current_time;
     args->timers.partitioning_pass_1_timer = current_time;
-    args->timers.partitioning_hist_timer = current_time;
+    args->timers.partitioning_pass_1_r_timer = current_time;
 #endif
     /* if monitoring synchronization stats */
 
@@ -1134,8 +1128,8 @@ prj_thread(void *param) {
     part.num_tuples = args->numR;
     part.total_tuples = args->totalR;
     part.relidx = 0;
-    part.hist_timer = &args->hist_timer;
-    part.copy_timer = &args->copy_timer;
+    part.hist_timer = &args->timers.partitioning_pass_1_hist_timer;
+    part.copy_timer = &args->timers.partitioning_pass_1_copy_timer;
 
 #ifdef USE_SWWC_OPTIMIZED_PART
     logger(DBG, "Use SSWC optimized part");
@@ -1146,8 +1140,8 @@ prj_thread(void *param) {
 
     args->barrier->wait();
     current_time = rdtscp_s();
-    args->timers.partitioning_hist_timer = current_time - args->timers.partitioning_hist_timer;
-    args->timers.partitioning_copy_timer = current_time;
+    args->timers.partitioning_pass_1_r_timer = current_time - args->timers.partitioning_pass_1_r_timer;
+    args->timers.partitioning_pass_1_s_timer = current_time;
 
     /* 2. partitioning for relation S */
     part.rel = args->relS;
@@ -1157,8 +1151,8 @@ prj_thread(void *param) {
     part.num_tuples = args->numS;
     part.total_tuples = args->totalS;
     part.relidx = 1;
-    part.hist_timer = &args->hist_timer;
-    part.copy_timer = &args->copy_timer;
+    part.hist_timer = &args->timers.partitioning_pass_1_hist_timer;
+    part.copy_timer = &args->timers.partitioning_pass_1_copy_timer;
 
 #ifdef USE_SWWC_OPTIMIZED_PART
     parallel_radix_partition_optimized(&part);
@@ -1168,10 +1162,12 @@ prj_thread(void *param) {
 
 
     /* wait at a barrier until each thread copies out */
-    args->barrier->wait();
     current_time = rdtscp_s();
-    args->timers.partitioning_copy_timer = current_time - args->timers.partitioning_copy_timer;
-
+    args->timers.partitioning_pass_1_s_timer = current_time - args->timers.partitioning_pass_1_s_timer;
+    if (my_tid != 0) {
+        args->timers.partitioning_pass_1_timer = current_time - args->timers.partitioning_pass_1_timer;
+    }
+    args->barrier->wait();
     /********** end of 1st partitioning phase ******************/
 
     /* 3. first thread creates partitioning tasks for 2nd pass */
@@ -1222,12 +1218,11 @@ prj_thread(void *param) {
         } else {
             logger(INFO, "Pass-2: skipped. Join tasks = %d", counter);
         }
+        args->timers.partitioning_pass_1_timer = current_time - args->timers.partitioning_pass_1_timer;
     }
 
 
     /* wait at a barrier until first thread adds all partitioning tasks */
-    current_time = rdtscp_s();
-    args->timers.partitioning_pass_1_timer = current_time - args->timers.partitioning_pass_1_timer;
     args->barrier->wait(
 #ifndef RADIX_NO_TIMING
             [args]() {
@@ -1258,13 +1253,14 @@ prj_thread(void *param) {
 #ifdef MUTEX_QUEUE
         task_t *task;
         while ((task = task_queue_get_atomic(part_queue))) {
-            serial_radix_partition(task, join_queue, R, D, &args->hist_in_depth_timer, &args->copy_in_depth_timer);
+            serial_radix_partition(task, join_queue, R, D, &args->timers.partitioning_pass_2_hist_timer, &args->timers.partitioning_pass_1_copy_timer);
             args->parts_partitioned++;
         }
 #else
         task_t task {};
         while (part_queue->pop(task)) {
-            serial_radix_partition(&task, join_queue, R, D, &args->hist_in_depth_timer, &args->copy_in_depth_timer);
+            serial_radix_partition(&task, join_queue, R, D, &args->timers.partitioning_pass_2_hist_timer,
+                &args->timers.partitioning_pass_2_copy_timer);
             args->parts_partitioned++;
         }
 #endif
@@ -1292,7 +1288,7 @@ prj_thread(void *param) {
             }
 #endif
     );
-    args->timers.join_timer = rdtscp_s();
+    args->timers.join_total_timer = rdtscp_s();
 
 #ifdef CHUNKED_TABLE
 #ifndef CHUNKED_TABLE_PREALLOC
@@ -1315,7 +1311,7 @@ prj_thread(void *param) {
                                        &args->build_in_depth_timer, &args->join_in_depth_timer, args->materialize);
 #else
         results += args->join_function(&task->relR, &task->relS, &task->tmpR, args->num_radix_bits, &output,
-                                       &args->build_in_depth_timer, &args->join_in_depth_timer, args->materialize);
+                                       &args->timers.build_in_depth_timer, &args->timers.join_in_depth_timer, args->materialize);
 #endif
 
         args->parts_joined++;
@@ -1328,10 +1324,11 @@ prj_thread(void *param) {
            prefetching  */
 #ifdef CHUNKED_TABLE
         results += args->join_function(&task.relR, &task.relS, &task.tmpR, args->num_radix_bits, args->thread_result_table,
-                                       &args->build_in_depth_timer, &args->join_in_depth_timer, args->materialize);
+                                       &args->timers.build_in_depth_timer, &args->timers.join_in_depth_timer, args->materialize);
 #else
         results += args->join_function(&task.relR, &task.relS, &task.tmpR, args->num_radix_bits, &output,
-                                       &args->build_in_depth_timer, &args->join_in_depth_timer, args->materialize);
+                                       &args->timers.build_in_depth_timer, &args->timers.join_in_depth_timer,
+                                       args->materialize);
 #endif
         args->parts_joined++;
     }
@@ -1352,7 +1349,7 @@ prj_thread(void *param) {
 
     /* this is for just reliable timing of finish time */
     current_time = rdtscp_s();
-    args->timers.join_timer = current_time - args->timers.join_timer;/* build finished */
+    args->timers.join_total_timer = current_time - args->timers.join_total_timer;/* build finished */
     args->timers.total_timer = current_time - args->timers.total_timer;/* probe finished */
 
     return nullptr;
@@ -1518,13 +1515,10 @@ join_init_run(const table_t *relR, const table_t *relS, JoinFunction jf, const j
         args[i].join_function = jf;
         args[i].nthreads = nthreads;
         args[i].timers = {};
-        args[i].build_in_depth_timer = 0;
-        args[i].join_in_depth_timer = 0;
-        args[i].hist_in_depth_timer = 0;
-        args[i].copy_in_depth_timer = 0;
-        args[i].hist_timer = 0;
-        args[i].copy_timer = 0;
         args[i].materialize = config->MATERIALIZE;
+
+        args[i].parts_joined = 0;
+        args[i].parts_partitioned = 0;
 #ifdef CHUNKED_TABLE
         args[i].thread_result_table = &(thread_result_tables[i]);
 #else
@@ -1534,7 +1528,7 @@ join_init_run(const table_t *relR, const table_t *relS, JoinFunction jf, const j
 
     logger(INFO, "Starting join threads");
     // Start the join threads backwards so that the thread pinned on core 0 does not influence the main thread.
-    for (int i = nthreads - 1; i >= 0; --i) {
+    for (int i = nthreads - 1; i >= 1; --i) {
         int rv = pthread_create(&tid[i], nullptr, prj_thread, (void *) &args[i]);
 
         if (rv) {
@@ -1543,11 +1537,15 @@ join_init_run(const table_t *relR, const table_t *relS, JoinFunction jf, const j
         }
     }
 
+    prj_thread(args);
+
     /* wait for threads to finish */
-    for (int i = nthreads - 1; i >= 0; --i) {
+    for (int i = nthreads - 1; i >= 1; --i) {
         pthread_join(tid[i], nullptr);
         result += args[i].result;
     }
+
+    result += args[0].result;
 
     auto join_time = rdtscp_s();
 
@@ -1584,32 +1582,48 @@ join_init_run(const table_t *relR, const table_t *relS, JoinFunction jf, const j
     uint64_t end_time = rdtscp_s();
     radix_timers_t max_timers{};
 
-    uint64_t build_timer_max = 0;
-    uint64_t join_timer_max = 0;
-    uint64_t hist_timer_max = 0;
-    uint64_t copy_timer_max = 0;
     for (int i = 0; i < nthreads; ++i) {
-        build_timer_max = std::max(args[i].build_in_depth_timer, build_timer_max);
-        join_timer_max = std::max(args[i].join_in_depth_timer, join_timer_max);
-        hist_timer_max = std::max(args[i].hist_in_depth_timer, hist_timer_max);
-        copy_timer_max = std::max(args[i].copy_in_depth_timer, copy_timer_max);
-
         max_timers.total_timer = std::max(args[i].timers.total_timer, max_timers.total_timer);
 
         max_timers.partitioning_total_timer = std::max(args[i].timers.partitioning_total_timer,
                                                        max_timers.partitioning_total_timer);
         max_timers.partitioning_pass_1_timer = std::max(args[i].timers.partitioning_pass_1_timer,
                                                         max_timers.partitioning_pass_1_timer);
-        max_timers.partitioning_hist_timer = std::max(args[i].hist_timer, max_timers.partitioning_hist_timer);
-        max_timers.partitioning_copy_timer = std::max(args[i].copy_timer, max_timers.partitioning_copy_timer);
-        max_timers.partitioning_pass_2_timer = std::max(args[i].timers.partitioning_pass_2_timer,
-                                                        max_timers.partitioning_pass_2_timer);
-        max_timers.join_timer = std::max(args[i].timers.join_timer, max_timers.join_timer);
+        max_timers.partitioning_pass_1_r_timer = std::max(args[i].timers.partitioning_pass_1_r_timer,
+                                                          max_timers.partitioning_pass_1_r_timer);
+        max_timers.partitioning_pass_1_s_timer =
+                std::max(args[i].timers.partitioning_pass_1_s_timer, max_timers.partitioning_pass_1_s_timer);
+        max_timers.partitioning_pass_1_hist_timer =
+                std::max(args[i].timers.partitioning_pass_1_hist_timer, max_timers.partitioning_pass_1_hist_timer);
+        max_timers.partitioning_pass_1_copy_timer =
+                std::max(args[i].timers.partitioning_pass_1_copy_timer, max_timers.partitioning_pass_1_copy_timer);
+        max_timers.partitioning_pass_2_timer =
+                std::max(args[i].timers.partitioning_pass_2_timer, max_timers.partitioning_pass_2_timer);
+        max_timers.partitioning_pass_2_hist_timer =
+                std::max(args[i].timers.partitioning_pass_2_hist_timer, max_timers.partitioning_pass_2_hist_timer);
+        max_timers.partitioning_pass_2_copy_timer =
+                std::max(args[i].timers.partitioning_pass_2_copy_timer, max_timers.partitioning_pass_2_copy_timer);
+        max_timers.join_total_timer = std::max(args[i].timers.join_total_timer, max_timers.join_total_timer);
+        max_timers.build_in_depth_timer =
+                std::max(args[i].timers.build_in_depth_timer, max_timers.build_in_depth_timer);
+        max_timers.join_in_depth_timer = std::max(args[i].timers.join_in_depth_timer, max_timers.join_in_depth_timer);
 
-        logger(INFO, "Thread %d time for first partitioning: %d\n"
-                     "          partitioned %d partitions in second pass\n"
-                     "          hist: %d copy: %d", i, args[i].hist_timer, args[i].parts_partitioned,
-               args[i].hist_in_depth_timer, args[i].copy_in_depth_timer);
+        logger(INFO, "Thread %d time for partitioning pass 1: %d\n"
+                     "          time for R: %d\n"
+                     "          time for S: %d\n"
+                     "          time for histogram: %d\n"
+                     "          time for copy:      %d\n"
+                     "          partitioned %d partitions in second pass. time: %d\n"
+                     "          hist: %d copy: %d\n"
+                     "          joined %d parts\n"
+                     "          build: %d probe: %d",
+                     i, args[i].timers.partitioning_pass_1_timer,
+                     args[i].timers.partitioning_pass_1_r_timer,
+                     args[i].timers.partitioning_pass_1_s_timer, args[i].timers.partitioning_pass_1_hist_timer,
+                     args[i].timers.partitioning_pass_1_copy_timer,
+                     args[i].parts_partitioned, args[i].timers.partitioning_pass_2_timer,
+               args[i].timers.partitioning_pass_2_hist_timer, args[i].timers.partitioning_pass_2_copy_timer,
+               args[i].parts_joined, args[i].timers.build_in_depth_timer, args[i].timers.join_in_depth_timer);
     }
 
     /* now print the timing results: */
@@ -1617,11 +1631,7 @@ join_init_run(const table_t *relR, const table_t *relS, JoinFunction jf, const j
                  start_time,
                  end_time,
                  relR->num_tuples + relS->num_tuples,
-                 result,
-                 build_timer_max,
-                 join_timer_max,
-                 hist_timer_max,
-                 copy_timer_max, preparation_time - start_time, join_time - preparation_time, free_time - join_time);
+                 result, preparation_time - start_time, join_time - preparation_time, free_time - join_time);
 #endif
 
     return joinresult;

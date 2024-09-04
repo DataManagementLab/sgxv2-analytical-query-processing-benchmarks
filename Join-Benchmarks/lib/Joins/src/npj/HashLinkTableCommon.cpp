@@ -127,7 +127,7 @@ probe_hashtable_no_overflow_unrolled(const hashtable_t *ht, const struct table_t
                                             static_cast<uint32_t>(k0 == bucket0->tuples[1].key));
         matches += std::min(bucket1->count, static_cast<uint32_t>(k1 == bucket1->tuples[0].key) +
                                             static_cast<uint32_t>(k1 == bucket1->tuples[1].key));
-        matches += std::min(bucket3->count, static_cast<uint32_t>(k2 == bucket2->tuples[0].key) +
+        matches += std::min(bucket2->count, static_cast<uint32_t>(k2 == bucket2->tuples[0].key) +
                                             static_cast<uint32_t>(k2 == bucket2->tuples[1].key));
         matches += std::min(bucket3->count, static_cast<uint32_t>(k3 == bucket3->tuples[0].key) +
                                             static_cast<uint32_t>(k3 == bucket3->tuples[1].key));

@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 import helpers.commons as commons
 
 TEEBENCH_PHASE_ORDER = ["total", "partition", "partition_1", "partition_r", "partition_s", "partition_2",
-                        "partition_2_h", "partition_2_c", "join_total", "build", "probe"]
+                        "partition_2_h", "partition_2_c", "join_total", "build", "probe", "build_miss", "probe_miss"]
 
 
 def parse_output(stdout):
@@ -19,6 +19,10 @@ def parse_output(stdout):
         if "Throughput" in line:
             throughput = float(re.findall("\d+\.\d+", line)[1])
         # find times
+        elif "PHT build LLC-misses" in line:
+            phases["build_miss"] = float(re.findall("\d+\.\d+", line)[1])
+        elif "PHT probe LLC-misses" in line:
+            phases["probe_miss"] = float(re.findall("\d+\.\d+", line)[1])
         else:
             phase = ""
             if "Total Join Time (cycles)" in line:
@@ -27,9 +31,9 @@ def parse_output(stdout):
                 phase = "partition"
             elif "Partition Pass One (cycles)" in line:
                 phase = "partition_1"
-            elif "Partition R" in line:
+            elif "Partition One Hist (cycles)" in line:
                 phase = "partition_r"
-            elif "Partition S" in line:
+            elif "Partition One Copy (cycles)" in line:
                 phase = "partition_s"
             elif "Partition Pass Two (cycles)" in line:
                 phase = "partition_2"
@@ -47,6 +51,7 @@ def parse_output(stdout):
                 value = int(re.findall(r'\d+', line)[
                                 -2])  # yes, this must be -2 because of control sequences, probably for colors.
                 phases[phase] = value
+
     return throughput, phases
 
 
@@ -149,18 +154,19 @@ class ExperimentConfig:
     modes: list[str]
     flags: list[list[str]]
     sizes: list[Tuple[int, int]]
-    algorithms: list[str] 
+    algorithms: list[str]
     threads: list[int]
     materialize: list[bool]
     repetitions: int
     init_core: list[int] = field(default_factory=lambda: list(range(1)))
     dynamic_enclave: list[bool] = field(default_factory=lambda: [False].copy())
     mitigation: list[bool] = field(default_factory=lambda: [False].copy())
+    skew: list[float] = field(default_factory=lambda: list(range(1)))
 
     def run_count(self):
         return (len(self.modes) * len(self.flags) * len(self.sizes) * len(self.algorithms) * len(self.threads)
                 * len(self.materialize) * self.repetitions * len(self.init_core) * len(self.dynamic_enclave)
-                * len(self.mitigation))
+                * len(self.mitigation) * len(self.skew))
 
 
 @dataclass
@@ -175,18 +181,20 @@ class JoinRunConfig:
     init_core: int = 0
     dynamic_enclave: bool = False
     mitigation: bool = False
+    skew: float = 0.0
 
     @classmethod
     def header(cls) -> str:
-        return "mode,flags,alg,materialize,threads,size_r,size_s,init_core,dynamic_enclave,mitigation"
+        return "mode,flags,alg,materialize,threads,size_r,size_s,init_core,dynamic_enclave,mitigation,skew"
 
     def as_comma_separated(self) -> str:
         return ",".join([self.mode, " ".join(self.flags), self.alg, str(self.materialize), str(self.threads),
                          str(self.size_r), str(self.size_s), str(self.init_core), str(self.dynamic_enclave),
-                         str(self.mitigation)])
+                         str(self.mitigation), str(self.skew)])
 
 
-def run_join_simple_flags(exe: Tuple[str, str], config: JoinRunConfig, reps: int, filename_detail: str):
+def run_join_simple_flags(exe: Tuple[str, str], config: JoinRunConfig, reps: int, filename_detail: str,
+                          total_runs: int = 0, total_runs_start: int = 0):
     with open(filename_detail, 'a') as f_detail, open(f"{filename_detail}-full.txt", 'a') as f_full:
         settings = config.as_comma_separated()
 
@@ -196,12 +204,15 @@ def run_join_simple_flags(exe: Tuple[str, str], config: JoinRunConfig, reps: int
         for i in range(reps):
             try:
                 time = datetime.now().astimezone().replace(microsecond=0).isoformat()
-                experiment_setting_announcement = f"[{time}] {i + 1}/{reps}: {settings}"
+                total_run_counter_string = f" {total_runs_start + i + 1}/{total_runs} " if total_runs else " "
+                local_run_counter_string = f"{i + 1}/{reps}"
+                experiment_setting_announcement = f"[{time}]{total_run_counter_string}{local_run_counter_string}: {settings}"
                 print(experiment_setting_announcement)
                 f_full.write(experiment_setting_announcement + '\n')
                 result = subprocess.run(
                     [f"./{exe[1]}", "-a", config.alg, "-r", str(config.size_r), "-s", str(config.size_s),
-                     "-n", str(config.threads), "-c", str(config.init_core)] + materialize_flag + mitigation_flag,
+                     "-n", str(config.threads), "-c", str(config.init_core), "-z",
+                     str(config.skew)] + materialize_flag + mitigation_flag,
                     cwd=f"../../{exe[0]}/",
                     env=os.environ | {"SGX_DBG_OPTIN": "1"},
                     capture_output=True,
@@ -234,13 +245,16 @@ def run_join_simple_flags(exe: Tuple[str, str], config: JoinRunConfig, reps: int
 
 
 def compile_and_run_simple_flags(config: ExperimentConfig, filename_detail: str):
-    print(f"Running {config.run_count()} configurations.")
+    run_count = config.run_count()
+    print(f"Running {run_count} configurations.")
     flags = config.flags if config.flags else [[]]
     cpms = 2200 if os.uname()[1].startswith("sgx06") else None
 
     commons.remove_file(filename_detail)
     commons.remove_file(f"{filename_detail}-full.txt")
     commons.init_file(filename_detail, f"{JoinRunConfig.header()},measurement,value\n")
+
+    total_run_counter = 0
 
     last_enclave_size = "0"
     last_flag_set = None
@@ -268,10 +282,14 @@ def compile_and_run_simple_flags(config: ExperimentConfig, filename_detail: str)
                     for mitigation in config.mitigation:
                         for algorithm in config.algorithms:
                             for threads in config.threads:
-                                for materialize in config.materialize:
-                                    for init_core in config.init_core:
-                                        if not exe:
-                                            raise ValueError("Trying to run a non-existent executable")
-                                        run_config = JoinRunConfig(mode, flag_set, algorithm, size[0], size[1], threads,
-                                                                   materialize, init_core, dyn_enclave, mitigation)
-                                        run_join_simple_flags(exe, run_config, config.repetitions, filename_detail)
+                                for skew in config.skew:
+                                    for materialize in config.materialize:
+                                        for init_core in config.init_core:
+                                            if not exe:
+                                                raise ValueError("Trying to run a non-existent executable")
+                                            run_config = JoinRunConfig(mode, flag_set, algorithm, size[0], size[1],
+                                                                       threads, materialize, init_core, dyn_enclave,
+                                                                       mitigation, skew)
+                                            run_join_simple_flags(exe, run_config, config.repetitions, filename_detail,
+                                                                  run_count, total_run_counter)
+                                            total_run_counter += config.repetitions

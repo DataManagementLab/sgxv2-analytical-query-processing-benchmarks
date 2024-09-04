@@ -75,13 +75,13 @@ def carsten_plot(filename_detail):
 
     data = pd.concat([data, hypothetical_native]).reset_index(drop=True)
     data = data[data["Setup"].isin(NAMES)]
-    data["Throughput in $10^6$ rows/s"] = data["value"]
+    data["Throughput in\n$10^6$ rows/s"] = data["value"]
 
     print(data[["Setup", "value"]].to_string())
 
     colors = [sns.color_palette("deep")[0], sns.color_palette("deep")[2]] * 2
-    f = plt.figure(figsize=(6, 3))
-    sns.barplot(data, x="Setup", hue="Setup", palette=colors, y="Throughput in $10^6$ rows/s", order=NAMES,
+    f = plt.figure(figsize=(6, 2.5))
+    sns.barplot(data, x="Setup", hue="Setup", palette=colors, y="Throughput in\n$10^6$ rows/s", order=NAMES,
                 hue_order=NAMES)
 
     f.axes[0].axhline(data.loc[data["Setup"] == NAMES[1], "value"].mean(), linestyle="--", color="grey", linewidth=1)
@@ -124,12 +124,12 @@ def paper_plot(filename_detail, experiment_name):
     hypothetical_local["Setup"] = NAMES[3]
 
     data = pd.concat([data, hypothetical_local]).reset_index(drop=True)
-    data["Throughput in $10^6$ rows/s"] = data["value"]
+    data["Throughput in\n$10^6$ rows/s"] = data["value"]
 
     print(data[["Setup", "mode", "value"]].to_string())
 
     plt.figure(figsize=(6, 3.25))
-    sns.barplot(data, x="Setup", y="Throughput in $10^6$ rows/s", hue="mode",
+    sns.barplot(data, x="Setup", y="Throughput in\n$10^6$ rows/s", hue="mode",
                 order=NAMES)
     plt.xlabel(None)
     plt.tight_layout()

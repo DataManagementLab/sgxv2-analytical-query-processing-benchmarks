@@ -24,7 +24,7 @@ void ocall_stop_performance_counters(uint64_t scale_factor, const char *phase) {
     // e.printReport(std::cout, scale_factor); // Uncomment this to print detailed report
     auto phase_str = phase ? phase : "";
     auto after_phase_space = phase ? " " : "";
-    for (size_t i = 3; i < 7; ++i) {
+    for (size_t i = 3; i < 9; ++i) {
         auto name_c_str = e.names[i].c_str();
         logger(LEVEL::INFO, "%s%s%s: %lf", phase_str, after_phase_space, name_c_str,
                e.events[i].readCounter() / static_cast<double>(scale_factor));

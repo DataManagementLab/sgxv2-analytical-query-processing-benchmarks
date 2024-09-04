@@ -635,13 +635,13 @@ create_relation_fk_from_pk(struct table_t *fkrel, struct table_t *pkrel,
 //}
 
 int
-create_relation_zipf(struct table_t * relation, uint64_t num_tuples,
-                     const int64_t maxid, const double zipf_param, int sorted)
+create_relation_zipf(table_t * const relation, const uint64_t num_tuples, const int64_t maxid, const double zipf_param,
+                     const int sorted)
 {
     check_seed();
 
     relation->num_tuples = num_tuples;
-    relation->tuples = (struct row_t *) malloc(relation->num_tuples * sizeof(struct row_t*));
+    relation->tuples = static_cast<row_t *>(malloc(relation->num_tuples * sizeof(row_t)));
     relation->sorted = 0;
 
     if (!relation->tuples) {

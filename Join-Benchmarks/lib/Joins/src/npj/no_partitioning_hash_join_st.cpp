@@ -90,7 +90,7 @@ build_hashtable_st_opt(hashtable_t *ht, const struct table_t *rel, bucket_buffer
     }
 }
 
-result_t *NPO_st(const table_t *relR, const table_t *relS, const joinconfig_t *config) {
+result_t *NPO_single_thread(const table_t *relR, const table_t *relS, const joinconfig_t *config) {
     hashtable_t *ht;
     int64_t result = 0;
 #ifndef NO_TIMING
@@ -109,6 +109,7 @@ result_t *NPO_st(const table_t *relR, const table_t *relS, const joinconfig_t *c
 
 #ifndef NO_TIMING
     ocall_get_system_micros(&start);
+    ocall_start_performance_counters();
     auto current_time = rdtscp_s();
     build_timer = current_time;
     total_timer = current_time;
@@ -120,7 +121,9 @@ result_t *NPO_st(const table_t *relR, const table_t *relS, const joinconfig_t *c
 #ifndef NO_TIMING
     current_time = rdtscp_s();
     build_timer = current_time - build_timer;
-    probe_timer = current_time;
+    ocall_stop_performance_counters(relR->num_tuples, "PHT build");
+    ocall_start_performance_counters();
+    probe_timer = rdtscp_s();
 #endif
 
     output_list_t *output;
@@ -131,6 +134,7 @@ result_t *NPO_st(const table_t *relR, const table_t *relS, const joinconfig_t *c
     probe_timer = current_time - probe_timer;
     total_timer = current_time - total_timer;
     /* over all */
+    ocall_stop_performance_counters(relS->num_tuples, "PHT probe");
     ocall_get_system_micros(&end);
     /* now print the timing results: */
     print_timing(start, end, total_timer, build_timer, probe_timer, relR->num_tuples + relS->num_tuples, result);
@@ -198,7 +202,7 @@ build_hashtable_no_overflow_unrolled(hashtable_t *ht, const struct table_t *rel)
 }
 
 result_t *
-NPO_no(const table_t *relR, const table_t *relS, const joinconfig_t *config) {
+NPO_no_overflow(const table_t *relR, const table_t *relS, const joinconfig_t *config) {
     hashtable_t *ht;
     int64_t result = 0;
 #ifndef NO_TIMING

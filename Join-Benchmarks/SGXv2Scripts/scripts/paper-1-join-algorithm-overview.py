@@ -61,7 +61,7 @@ def paper_plot_join_overview(filename_detail, experiment_name):
 
     data = data[(data["measurement"] == "throughput") & (data["alg"].isin(["PHT", "RHO", "MWAY", "INL", "CrkJoin"]))]
 
-    data["Throughput in $10^6$ rows/s"] = data["value"]
+    data["Throughput in\n$10^6$ rows/s"] = data["value"]
     data["Setting"] = data["mode"].replace({"sgx": "SGX DiE", "native": "Plain CPU"})
     data["Join Algorithm"] = data["alg"]
 
@@ -70,10 +70,10 @@ def paper_plot_join_overview(filename_detail, experiment_name):
     sns.set_context("notebook")
     sns.set_palette([sns.color_palette("deep")[0], sns.color_palette("deep")[2]])
 
-    f = plt.figure(figsize=(6, 3))
-    plot = sns.barplot(data, y="Throughput in $10^6$ rows/s", hue="Setting", x="Join Algorithm",
+    f = plt.figure(figsize=(6, 2.5))
+    plot = sns.barplot(data, y="Throughput in\n$10^6$ rows/s", hue="Setting", x="Join Algorithm",
                        order=["PHT", "RHO", "MWAY", "INL", "CrkJoin"], errorbar="sd")
-    # sns.move_legend(plot, "center right", frameon=True, bbox_to_anchor=(1, 0.48))
+    sns.move_legend(plot, "lower center", frameon=False, bbox_to_anchor=(0.5, 0.95), title=None, ncols=2)
 
     hatches = ['', '\\\\']
 
@@ -105,7 +105,7 @@ def paper_plot_join_overview_two_size(filename_detail, experiment_name):
 
     data = data[(data["measurement"] == "throughput") & (data["alg"].isin(["PHT", "RHO", "MWAY", "INL", "CrkJoin"]))]
 
-    data["Throughput in $10^6$ rows/s"] = data["value"]
+    data["Throughput in\n$10^6$ rows/s"] = data["value"]
     data["Setting"] = data["mode"].replace({"sgx": "SGX DiE", "native": "Plain CPU"})
     data["Join Algorithm"] = data["alg"]
     data["Size"] = data["size_r"].astype(int).replace({13107200: "100/400", 1310720: "10/4000"})
@@ -115,7 +115,7 @@ def paper_plot_join_overview_two_size(filename_detail, experiment_name):
     sns.set_context("notebook")
     sns.set_palette([sns.color_palette("deep")[0], sns.color_palette("deep")[2]])
 
-    plot = sns.catplot(data, y="Throughput in $10^6$ rows/s", hue="Setting", x="Join Algorithm", col="Size",
+    plot = sns.catplot(data, y="Throughput in\n$10^6$ rows/s", hue="Setting", x="Join Algorithm", col="Size",
                        order=["PHT", "RHO", "MWAY", "INL", "CrkJoin"], errorbar="sd", kind="bar", height=2.8, aspect=1)
     sns.move_legend(plot, "upper right", frameon=True, bbox_to_anchor=(0.57, 0.85))
 

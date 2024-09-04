@@ -17,7 +17,7 @@ def paper_intro_plot(filename_detail):
 
     data = pd.read_csv(filename_detail, header=0)
     data = data[data["measurement"] == "throughput"]
-    data["Join Throughput in $10^6$ rows/s"] = data["value"]
+    data["Join Throughput in\n$10^6$ rows/s"] = data["value"]
 
     data["Join"] = (data["mode"] + data["alg"] + data["flags"].str.contains("UNROLL").astype(str)).replace({
         "nativeCRKJFalse": "",
@@ -32,11 +32,11 @@ def paper_intro_plot(filename_detail):
 
     plt.xticks(rotation=90)
 
-    f = plt.figure(figsize=(6, 3))
-    p = sns.barplot(data,  y="Join Throughput in $10^6$ rows/s", x="Join", hue="Join", order=joins, hue_order=joins)
+    f = plt.figure(figsize=(6, 2.5))
+    p = sns.barplot(data,  y="Join Throughput in\n$10^6$ rows/s", x="Join", hue="Join", order=joins, hue_order=joins)
     p.set(xlabel=None)
-    p.set_ylim(bottom=0, top=1800)
-    means = data.groupby("Join")["Join Throughput in $10^6$ rows/s"].mean()
+    p.set_ylim(bottom=0, top=1900)
+    means = data.groupby("Join")["Join Throughput in\n$10^6$ rows/s"].mean()
 
     f.axes[0].yaxis.set_label_coords(-0.12, 0.43)
     f.axes[0].axvline(2.5, linestyle="--", color="black", linewidth=1)
@@ -67,7 +67,7 @@ def paper_intro_plot_mitigation(filename_detail):
 
     data = pd.read_csv(filename_detail, header=0)
     data = data[data["measurement"] == "throughput"]
-    data["Throughput in $10^6$ rows/s"] = data["value"]
+    data["Throughput in\n$10^6$ rows/s"] = data["value"]
 
     data["Join"] = (data["mode"] + data["alg"] + data["flags"].str.contains("UNROLL").astype(str) + data[
         "mitigation"].astype(str)).replace({
@@ -81,11 +81,11 @@ def paper_intro_plot_mitigation(filename_detail):
 
     plt.xticks(rotation=90)
 
-    plt.figure(figsize=(6, 3))
-    p = sns.barplot(data, y="Throughput in $10^6$ rows/s", x="Join", hue="Join", order=joins[:-1], hue_order=joins[:-1])
+    plt.figure(figsize=(6, 2.5))
+    p = sns.barplot(data, y="Throughput in\n$10^6$ rows/s", x="Join", hue="Join", order=joins[:-1], hue_order=joins[:-1])
     p.set(xlabel=None)
     p.set_ylim(bottom=0, top=1600)
-    means = data.groupby("Join")["Throughput in $10^6$ rows/s"].mean()
+    means = data.groupby("Join")["Throughput in\n$10^6$ rows/s"].mean()
 
     for container in p.containers:
         p.bar_label(container, fmt="%.1f")

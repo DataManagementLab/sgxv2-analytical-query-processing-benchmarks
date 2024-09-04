@@ -364,7 +364,7 @@ def paper_figure_random_access_mean(write_file, read_file):
     sns.set_style("ticks")
     sns.set_context("notebook")
 
-    plt.figure(figsize=(6, 2.75))
+    plt.figure(figsize=(6, 2))
     plot = sns.lineplot(combined_df, x='Data Size', y='Rel. Performance', hue='Access Type', style='Access Type',
                         hue_order=access_types, style_order=access_types, errorbar="sd", markers=True,
                         palette=sns.color_palette("deep"))
@@ -373,9 +373,8 @@ def paper_figure_random_access_mean(write_file, read_file):
     plt.xlim([2 ** 10, 2 ** 35])
     plt.ylim(bottom=0)
 
-    plot.set_xticks([2 ** x for x in range(10, 36)],
-                    ([str(2 ** x) + unit for unit in ["KB", "MB", "GB"] for x in range(0, 10)])[:26],
-                    rotation=90)
+    plot.set_xticks([2 ** x for x in range(10, 36, 5)],
+                    ([str(2 ** x) + unit for unit in ["KB", "MB", "GB"] for x in range(0, 10)])[:26:5])
 
     plot.set_yticks([0, 0.25, 0.5, 0.75, 1, 1.25])
 
@@ -385,7 +384,7 @@ def paper_figure_random_access_mean(write_file, read_file):
     plt.text(2 ** 14 * 3, 0.02, "L1", rotation=90, ha='right', va='bottom', color="grey")
     plt.text(2 ** 18 * 5, 0.02, "L2", rotation=90, ha='right', va='bottom', color="grey")
     plt.text(2 ** 23 * 3 + 2 ** 20, 0.02, "L3", rotation=90, ha='left', va='bottom', color="grey")
-    sns.move_legend(plot, "center left", bbox_to_anchor=(0, 0.45))
+    sns.move_legend(plot, "lower center", frameon=False, bbox_to_anchor=(0.5, 0.95), title=None, ncols=2)
     #plot.yaxis.set_label_coords(-0.1, 0.4)
     plot.axhline(1, linestyle="-", color="grey", alpha=0.5, linewidth=1)
 
@@ -404,8 +403,8 @@ def main():
     sns.set_context("notebook")
     sns.set_palette("deep")
 
-    # paper_figure_random_write()
-    # paper_figure_increment()
+    paper_figure_random_write()
+    paper_figure_increment()
     paper_figure_random_access_mean("write_area_increase", "read")
 
 

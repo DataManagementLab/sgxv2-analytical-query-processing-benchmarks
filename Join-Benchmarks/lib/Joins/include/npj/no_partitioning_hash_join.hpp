@@ -12,4 +12,7 @@ PHT_no_overflow(const table_t *relR, const table_t *relS, const joinconfig_t *co
 result_t *
 PHT_unrolled(const table_t *relR, const table_t *relS, const joinconfig_t *config);
 
+result_t *
+PHT_overflow(const table_t *relR, const table_t *relS, const joinconfig_t *config);
+
 #endif // NO_PARTITIONING_JOIN_H_

@@ -18,7 +18,7 @@ def paper_plot_throughput(filename_detail):
 
     settings = ["Plain CPU\nLock-Free", "Plain CPU\nMutex", "SGX\nLock-Free", "SGX\nMutex"]
 
-    data["Throughput in $10^6$ rows/s"] = data["value"]
+    data["Throughput in\n$10^6$ rows/s"] = data["value"]
     data["Setting"] = (data["mode"] + data["flags"].str.contains("MUTEX_QUEUE").astype(str)).replace({
         "nativeFalse": settings[0],
         "nativeTrue": settings[1],
@@ -29,8 +29,8 @@ def paper_plot_throughput(filename_detail):
     color_1 = sns.color_palette("deep")[0]
     color_2 = sns.color_palette("deep")[2]
 
-    f = plt.figure(figsize=(6, 3))
-    sns.barplot(data, y="Throughput in $10^6$ rows/s", x="Setting", hue="Setting", order=settings,
+    f = plt.figure(figsize=(6, 2.5))
+    sns.barplot(data, y="Throughput in\n$10^6$ rows/s", x="Setting", hue="Setting", order=settings,
                 palette=[color_1, color_2] * 2, errorbar="sd")
 
     plt.xlabel(None)

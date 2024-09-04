@@ -117,10 +117,11 @@ def paper_plot_stacked(filename_detail, experiment_name):
 
     data = data.sort_values(by="sort_column")
 
-    palette = [sns.color_palette("deep")[0], sns.color_palette("deep")[4], sns.color_palette("deep")[2],
-               sns.color_palette("deep")[3]]
+    deep = sns.color_palette("deep")
+    palette = [deep[0], deep[4], deep[2], deep[7]]
+    hatches = ['', '||', '\\\\', 'oo']
 
-    f, [ax0, ax1] = plt.subplots(ncols=2, figsize=(6, 4), squeeze=True)
+    f, [ax0, ax1] = plt.subplots(ncols=2, figsize=(6, 3.5), squeeze=True)
     (so.Plot(data[data["Scale Factor"] == 10], x="Query", y="Runtime in ms", color="Setting", alpha="Phase")
      .add(so.Bar(), so.Agg(), so.Dodge(by=["color"]), so.Stack())
      .scale(
@@ -143,15 +144,21 @@ def paper_plot_stacked(filename_detail, experiment_name):
      .on(ax1)
      .plot())
 
-    hatches = ['', 'xx', '\\\\', '--']
+    for l in f.legends:
+        l.set_visible(False)
 
-    for hatch, color, handle in zip(hatches, palette, f.legends[-1].legend_handles):
+    l1 = plt.legend(ax0.patches[::2], setting_order.keys(), loc="lower center", bbox_to_anchor=(-0.25, 1.17), frameon=False, ncols=4, columnspacing=0.8)
+
+    for hatch, color, handle in zip(hatches, palette, l1.legend_handles):
         handle.set_color(color)
         handle.set_linewidth(0)
         handle.set_edgecolor("white")
         handle.set_hatch(hatch)
 
-    move_legend_fig_to_ax(f, ax1, loc="upper right", bbox_to_anchor=(1.01, 1.01), labelspacing=0.3, borderpad=0.25)
+    l2 = ax0.legend(ax0.patches[:2], ["Join", "Selection"], loc="lower center", bbox_to_anchor=(1.1, 1.07), frameon=False, ncols=2, columnspacing=0.8)
+
+    l2.legend_handles[0].set_linewidth(1)
+    l2.legend_handles[1].set_linewidth(1.7)
 
     ax0.grid(axis="y")
     ax1.grid(axis="y")

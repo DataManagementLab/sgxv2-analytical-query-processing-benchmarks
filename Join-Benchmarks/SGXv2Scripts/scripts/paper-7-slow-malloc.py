@@ -18,7 +18,7 @@ def paper_plot_throughput(filename_detail):
 
     data["prealloc"] = data["flags"].str.contains("CHUNKED_TABLE_PREALLOC")
 
-    data["Throughput in $10^6$ rows/s"] = data["value"]
+    data["Throughput in\n$10^6$ rows/s"] = data["value"]
     data["Setting"] = (data["mode"] + data["dynamic_enclave"].astype(str) + data["prealloc"].astype(str)).replace({
         "sgxTrueTrue": "Dynamic Enclave Size Prealloc",
         "sgxTrueFalse": "Dynamic\nEnclave Size",
@@ -34,8 +34,8 @@ def paper_plot_throughput(filename_detail):
 
     palette = [sns.color_palette("deep")[0], sns.color_palette("deep")[0], sns.color_palette("deep")[2],
                sns.color_palette("deep")[2]]
-    f = plt.figure(figsize=(6, 3))
-    sns.barplot(data, y="Throughput in $10^6$ rows/s", x="Setting",
+    f = plt.figure(figsize=(6, 2.5))
+    sns.barplot(data, y="Throughput in\n$10^6$ rows/s", x="Setting",
                 hue="Setting", palette=palette, legend=False,
                 order=order, hue_order=order,
                 errorbar="sd")
@@ -55,7 +55,7 @@ def paper_plot_throughput(filename_detail):
     plt.savefig(plot_filename, transparent=False, bbox_inches='tight', pad_inches=0.1, dpi=300)
     # plt.show()
 
-    means = data.groupby("Setting")["Throughput in $10^6$ rows/s"].mean()
+    means = data.groupby("Setting")["Throughput in\n$10^6$ rows/s"].mean()
     print(f"Relative performance plain CPU dynamic {means[order[3]] / means[order[1]]}")
     print(f"Relative performance static enclave {means[order[3]] / means[order[2]]}")
 

@@ -156,15 +156,23 @@ def paper_figure_NPO_combined(filename_detail):
     data_phases["Runtime in s"] = data_phases["value"] / 2900 / 10 ** 6
     data_phases["Phase"] = data_phases["measurement"].replace({"build": "Build", "probe": "Probe"})
 
-    fig, (ax1, ax2) = plt.subplots(ncols=2, sharex="none", sharey="none", figsize=(6, 3.25), squeeze=True)
+    data_cache_misses = data[data["measurement"].isin(["build_miss", "probe_miss"])]
+    mean_cache_misses = data_cache_misses.groupby(["size_r", "measurement", "Setting"])["value"].mean()
+
+    print(mean_cache_misses.to_string())
+
+    fig, (ax1, ax2) = plt.subplots(ncols=2, sharex="none", sharey="none", figsize=(6, 2.5), squeeze=True)
 
     sns.barplot(relative_df, x="Hash Size", y="Relative Throughput", color=sns.color_palette("deep")[2],
                 errorbar="sd", ax=ax1)
     sns.barplot(data_phases, y="Runtime in s", x="Phase", hue="Setting", order=["Build", "Probe"],
                 palette=[sns.color_palette("deep")[0], sns.color_palette("deep")[2]], ax=ax2)
     sns.move_legend(
-        ax2, "upper left",
-        bbox_to_anchor=(0, 1)
+        ax2, "lower center",
+        bbox_to_anchor=(-0.2, 1),
+        frameon=False,
+        title=None,
+        ncols=2
     )
 
     for ax in [ax1, ax2]:

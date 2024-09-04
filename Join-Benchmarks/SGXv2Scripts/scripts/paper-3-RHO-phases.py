@@ -207,12 +207,14 @@ def paper_figure_RHO_phases_mitigation_color(filename_detail, threads):
     sns.set_palette([sns.color_palette("deep")[0], sns.color_palette("deep")[2], sns.color_palette("deep")[3]])
 
     plot = sns.catplot(data, y="Time in ms", x="Phase", hue="Setting", row="Unrolling", order=PHASES,
-                       row_order=[False, True], kind="bar", height=1.6, aspect=2.6, sharey=True, errorbar="sd",
+                       row_order=[False, True], kind="bar", height=1.3, aspect=3.2, sharey=True, errorbar="sd",
                        hue_order=SETTINGS)
 
     axes = plot.axes.flatten()
     axes[0].set_title("Not Optimized", fontdict={"fontsize": 13})
     axes[1].set_title("Optimized with Unroll + Reorder", fontdict={"fontsize": 13})
+    axes[0].set_ylabel("")
+    axes[1].yaxis.set_label_coords(-0.11,1.25)
 
     hatches = ['', '\\\\', '--']
 
@@ -223,6 +225,8 @@ def paper_figure_RHO_phases_mitigation_color(filename_detail, threads):
             elif i // 6 == 2:
                 bar.set_hatch(hatches[2])
         ax.grid(axis="y")
+        ax.spines['top'].set_visible(True)
+        ax.spines['right'].set_visible(True)
 
     plt.ylim(bottom=0)
     if threads == 1:
@@ -230,12 +234,13 @@ def paper_figure_RHO_phases_mitigation_color(filename_detail, threads):
     elif threads == 16:
         plt.yticks([5, 10, 15, 20, 25])
     plt.xlabel("")
-    sns.move_legend(plot, "upper right", frameon=True, bbox_to_anchor=(1, 1))
+    sns.move_legend(plot, "lower center", frameon=False, bbox_to_anchor=(0.5, 0.9), ncols=3, title=None)
 
     for hatch, handle in zip(hatches, plot._legend.legend_handles):
         handle.set_hatch(hatch)
 
     plt.tight_layout()
+    plt.subplots_adjust(hspace=0.5)
     plot_filename = f"../img/paper-figure-RHO-phases-mitigation-color.pdf"
     # plt.show()
     plt.savefig(plot_filename, bbox_inches='tight', pad_inches=0.1, dpi=300)

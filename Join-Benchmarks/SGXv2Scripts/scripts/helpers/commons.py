@@ -51,13 +51,11 @@ def configure(flags=None, enclave_size=None, debug=False, cpms=2900, dynamic_enc
                          "-B", build_dir]
 
             print(f"Configure CMAKE: {' '.join(arguments)}")
-            subprocess.check_output(arguments, cwd="../../", stderr=subprocess.DEVNULL)
+            subprocess.check_output(arguments, cwd="../../", stderr=subprocess.STDOUT)
             return build_dir
         except subprocess.CalledProcessError as e:
             print(f"Failed with exit code {e.returncode}! Stdout:")
-            print(e.stdout)
-            print("stderr:")
-            print(e.stderr)
+            print(e.stdout.decode("utf-8"))
             return None
     else:
         print(f"Skipped configuring {build_dir}. Already exists.")
@@ -92,13 +90,11 @@ def compile_configured_app(target: str, build_dir: str) -> Optional[Tuple[str, s
     try:
         print(f"Building {build_dir}/{target}")
         subprocess.check_output(["cmake", "--build", build_dir, "--target", target],
-                                cwd="../../", stderr=subprocess.DEVNULL)
+                                cwd="../../", stderr=subprocess.STDOUT)
         return build_dir, target
     except subprocess.CalledProcessError as e:
         print(f"Failed with exit code {e.returncode}! Stdout:")
-        print(e.stdout)
-        print("stderr:")
-        print(e.stderr)
+        print(e.stdout.decode("utf-8"))
         return None
 
 
@@ -109,12 +105,10 @@ def clean_all_builds():
     for build_dir in build_directories:
         try:
             subprocess.check_output(["cmake", "--build", build_dir, "--target", "clean"],
-                                    cwd="../../", stderr=subprocess.DEVNULL)
+                                    cwd="../../", stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             print(f"Failed to clean build directory {build_dir} with error code {e.returncode}! Stdout:")
-            print(e.stdout)
-            print("stderr:")
-            print(e.stderr)
+            print(e.stdout.decode("utf-8"))
 
 
 def delete_all_configurations():

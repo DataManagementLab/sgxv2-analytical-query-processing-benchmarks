@@ -133,6 +133,15 @@ def paper_figure_histogram_facet(file):
     data["Runtime in ms"] = data["cpuCycles"] / 2900 / 1000
     data["Number of Histogram Bins"] = data["num_bins"]
 
+    means = data[(data["Optimization"] == "Unroll + Reorder") & (data["Setting"].isin(["Plain CPU", "SGX DiE"]))].groupby(["Setting", "num_bins"])["Runtime in ms"].mean()
+
+    native = means["Plain CPU"]
+    sgx = means["SGX DiE"]
+
+    relative = sgx / native
+
+    print(relative.to_string())
+
     sns.set_style("ticks")
     sns.set_context("notebook")
 
@@ -141,7 +150,7 @@ def paper_figure_histogram_facet(file):
     order = ["Plain CPU", "Plain CPU M", "SGX DiE"]
     plot = sns.relplot(data, x="Number of Histogram Bins", y="Runtime in ms", hue="Setting", style="Setting",
                        col="Optimization", markers=True, hue_order=order, style_order=order, errorbar="sd",
-                       palette=palette, kind="line", height=2.5, aspect=0.95)
+                       palette=palette, kind="line", height=1.8, aspect=1.3)
 
     upper_bound = 14
     # plt.legend()
@@ -153,11 +162,15 @@ def paper_figure_histogram_facet(file):
         ax.set_ylim(bottom=0, top=215)
         ax.set_xticks([2 ** x for x in range(0, upper_bound + 1, 4)],
                       [str(2 ** x) + unit for unit in ["", "ki", "Mi"] for x in range(0, 10)][:upper_bound + 1:4])
+        ax.set_yticks([0, 100,  200])
         ax.grid(axis="y")
         ax.axvline(x=2 ** 12 * 3, ymin=0, ymax=1, linestyle="--", color="grey")
         ax.text(2 ** 12 * 3, 1, "L1", rotation=90, ha='right', va='bottom', color="grey")
+        ax.set_frame_on(True)
+        ax.spines['top'].set_visible(True)
+        ax.spines['right'].set_visible(True)
 
-    sns.move_legend(plot, "center right", bbox_to_anchor=(0.96, 0.66), frameon=True)
+    sns.move_legend(plot, "lower center", bbox_to_anchor=(0.5, 0.9), frameon=False, title=None, ncols=3, borderpad=0)
 
     plot.set_titles(col_template="{col_name}")
 
@@ -297,15 +310,17 @@ def paper_figure_unrolling_factors_facet():
     sns.set_style("ticks")
     sns.set_context("notebook")
 
-    f, axes = plt.subplots(ncols=2, figsize=(6, 2.5), tight_layout=True, width_ratios=(7, 6))
+    f, axes = plt.subplots(ncols=2, figsize=(6, 2.25), tight_layout=True, width_ratios=(7, 6))
 
     sns.barplot(data_scalar, x="Unroll Factor", y="Runtime in ms", errorbar="sd", hue="Setting",
                 palette=[sns.color_palette("deep")[0], sns.color_palette("deep")[2]],
-                legend=False, ax=axes[0])
+                legend="auto", ax=axes[0])
 
     sns.barplot(data_avx, x="Unroll Factor", y="Runtime in ms", errorbar="sd", hue="Setting",
                 palette=[sns.color_palette("deep")[0], sns.color_palette("deep")[2]],
-                legend="auto", ax=axes[1])
+                legend=False, ax=axes[1])
+
+    sns.move_legend(axes[0], "lower center", bbox_to_anchor=(0.85, 1.2), frameon=False, title=None, ncols=3, borderpad=0)
 
     hatches = ['', '\\\\']
 
@@ -319,15 +334,17 @@ def paper_figure_unrolling_factors_facet():
             if i // np == 1:
                 bar.set_hatch(hatches[1])
 
-    for hatch, handle in zip(hatches, axes[1].get_legend().legend_handles):
+    for hatch, handle in zip(hatches, axes[0].get_legend().legend_handles):
         handle.set_hatch(hatch)
 
     axes[0].set_title("Scalar")
+    axes[0].set_yticks([0, 100, 200])
     axes[1].set_title("AVX")
     axes[1].set_ylabel("")
     axes[1].set_yticks([0, 100, 200], ["", "", ""])
 
     plt.tight_layout()
+    plt.subplots_adjust(wspace=0.1)
     plt.savefig(f"img/paper-figure-unrolling-improvement-combined.pdf", bbox_inches='tight', pad_inches=0.1, dpi=300)
     plt.close()
 

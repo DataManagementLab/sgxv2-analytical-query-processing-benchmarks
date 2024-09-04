@@ -256,7 +256,7 @@ save_in_bucket(bucket_t *bucket, const row_t &tuple) {
 }
 
 /**
- * Unrolled, thread-save hashtable build for a hashtable without overflow buckets.
+ * Thread-save hashtable build for a hashtable without overflow buckets.
  *
  * @param ht hash table to be built
  * @param rel the build relation
@@ -504,18 +504,16 @@ PHT_no_overflow_template(const table_t *relR, const table_t *relS, const joincon
 
 result_t *
 PHT(const table_t *relR, const table_t *relS, const joinconfig_t *config) {
-    // This looks like we compare a version of PHT that cannot deal with overflow with a version that can deal with
-    // overflow, which would be unfair. However, since we do a foreign key join with a dense key, overflow will never
-    // happen in the first place. A performance comparison of PHT with PHT_no_overflow showed that the performance
-    // difference in this case is miniscule. Thus, this comparison is now skewed by the lack of overflow handling in
-    // PHT_no_overflow. The difference is purely due to the unrolling.
 #ifdef UNROLL
     return PHT_no_overflow_template<
         build_hashtable_mt_no_overflow_unrolled_goto,
         probe_hashtable_no_overflow_unrolled
     >(relR, relS,config);
 #else
-    return PHT_int(relR, relS, config);
+    return PHT_no_overflow_template<
+        build_hashtable_mt_no_overflow,
+        probe_hashtable_no_overflow
+    >(relR, relS,config);
 #endif
 }
 
@@ -533,4 +531,9 @@ PHT_unrolled(const table_t *relR, const table_t *relS, const joinconfig_t *confi
         build_hashtable_mt_no_overflow_unrolled_goto,
         probe_hashtable_no_overflow_unrolled
     >(relR, relS, config);
+}
+
+result_t *
+PHT_overflow(const table_t *relR, const table_t *relS, const joinconfig_t *config) {
+    return PHT_int(relR, relS, config);
 }

@@ -34,24 +34,33 @@ def paper_plot_unroll_reorder_improvements(filename_detail, experiment_name):
     deep = sns.color_palette("deep")
     palette = [deep[0], deep[3], deep[4], deep[2], deep[5]]
 
-    f = plt.figure(figsize=(6, 3.5))
-    sns.barplot(data, y="Throughput in $10^6$ rows/s", hue="Setting", x="Algorithm", palette=palette[1:],
-                hue_order=settings[1:], errorbar="sd")
+    f = plt.figure(figsize=(6, 2.5))
+    sns.barplot(data, y="Throughput in $10^6$ rows/s", hue="Setting", x="Algorithm", palette=palette,
+                hue_order=settings, errorbar="sd")
 
-    hatches = ['--', 'xx', '\\\\', 'oo']
+    hatches = ['', '--', 'xx', '\\\\', 'oo']
 
     for i, bar in enumerate(f.axes[0].patches):
-        if i // 2 == 0:
-            bar.set_hatch(hatches[0])
-        elif i // 2 == 1:
+        if i // 2 == 1:
             bar.set_hatch(hatches[1])
         elif i // 2 == 2:
             bar.set_hatch(hatches[2])
         elif i // 2 == 3:
             bar.set_hatch(hatches[3])
+        elif i // 2 == 4:
+            bar.set_hatch(hatches[4])
 
     for hatch, handle in zip(hatches, f.axes[0].get_legend().legend_handles):
         handle.set_hatch(hatch)
+
+    sns.move_legend(
+        f.axes[0], "lower center",
+        bbox_to_anchor=(.5, 1), ncol=3, title=None, frameon=False,
+    )
+
+    plt.xlabel("")
+
+    f.axes[0].yaxis.set_label_coords(-0.11, 0.63)
 
     means = data.groupby(["mode", "unroll", "mitigation", "Algorithm"])["Throughput in $10^6$ rows/s"].mean()
 

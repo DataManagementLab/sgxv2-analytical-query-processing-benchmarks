@@ -69,3 +69,8 @@ python3 plot.py
 
 The result figures are stored in `img`. The other results from `RadixPartitioning` and `WriteBench` can be 
 reproduced with the same process.
+
+### Exception
+
+To reproduce the SIMD scan experiments with 16-bit input values, checkout the branch `16-bit` and run 
+`0_single_thread.sh single-thread-16bit.csv`.
