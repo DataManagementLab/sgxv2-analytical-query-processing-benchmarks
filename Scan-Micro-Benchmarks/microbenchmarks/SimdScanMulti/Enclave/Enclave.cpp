@@ -10,8 +10,13 @@
 #include "../shared/ResultAllocators.hpp"
 #include "../shared/ScalarScan.hpp"
 
-std::unique_ptr<uint8_t[]> data_preload;
-std::unique_ptr<int64_t[]> dict_preload;
+struct free_delete
+{
+    void operator()(void* x) { free(x); }
+};
+
+std::unique_ptr<uint8_t[], free_delete> data_preload;
+std::unique_ptr<int64_t[], free_delete> dict_preload;
 size_t preloaded_num_records = 0;
 size_t dict_num_records = 0;
 bool pre_allocated = false;
@@ -37,7 +42,7 @@ void ecall_free_preload_data() {
 
 void ecall_init_data(size_t num_entries) {
     try {
-        data_preload = allocate_data_array_aligned<uint8_t, 64>(num_entries);
+        data_preload = std::unique_ptr<uint8_t[], free_delete> {reinterpret_cast<uint8_t *>(allocate_data_array_aligned<uint16_t, 64>(num_entries / 2))};
         preloaded_num_records = num_entries;
     } catch (const std::bad_alloc &error) {
         ocall_print_error("Allocation inside enclave failed with std::bad_alloc!");
@@ -47,7 +52,7 @@ void ecall_init_data(size_t num_entries) {
 
 void ecall_init_dict(size_t num_entries) {
     try {
-        dict_preload = allocate_data_array_aligned<int64_t, 64>(num_entries);
+        dict_preload = std::unique_ptr<int64_t[], free_delete>(allocate_data_array_aligned<int64_t, 64>(num_entries));
         dict_num_records = num_entries;
     } catch (const std::bad_alloc &error) {
         ocall_print_error("Dict allocation inside enclave failed with std::bad_alloc!");
@@ -282,19 +287,19 @@ ecall_bitvector_scan_user(uint8_t predicate_low,
     }
 
     for (auto i = 0; i < warmup_runs; ++i) {
-        SIMD512::bitvector_scan(predicate_low,
+        SIMD512::bitvector_scan_16bit(predicate_low,
                                 predicate_high,
                                 (const __m512i *) data,
                                 num_records,
-                                reinterpret_cast<__mmask64 *>(output_buffer));
+                                reinterpret_cast<__mmask32 *>(output_buffer));
     }
     rdtscpWrapper wrap(cpu_cntr);
     for (auto i = 0; i < num_runs; ++i) {
-        SIMD512::bitvector_scan(predicate_low,
+        SIMD512::bitvector_scan_16bit(predicate_low,
                                 predicate_high,
                                 (const __m512i *) data,
                                 num_records,
-                                reinterpret_cast<__mmask64 *>(output_buffer));
+                                reinterpret_cast<__mmask32 *>(output_buffer));
     }
 }
 
@@ -317,14 +322,14 @@ ecall_bitvector_scan_preload(uint8_t predicate_low,
         warmup_runs = 0;
     }
     auto data_start = reinterpret_cast<__m512i *>(data_preload.get() + start_idx);
-    auto result_start = reinterpret_cast<__mmask64 *>(results_preload->bitvector_results.data() + output_idx);
+    auto result_start = reinterpret_cast<__mmask32 *>(results_preload->bitvector_results.data() + output_idx);
 
     for (auto i = 0; i < warmup_runs; ++i) {
-        SIMD512::bitvector_scan(predicate_low, predicate_high, data_start, num_records, result_start);
+        SIMD512::bitvector_scan_16bit(predicate_low, predicate_high, data_start, num_records, result_start);
     }
     rdtscpWrapper wrap(cpu_cntr);
     for (auto i = 0; i < num_runs; ++i) {
-        SIMD512::bitvector_scan(predicate_low, predicate_high, data_start, num_records, result_start);
+        SIMD512::bitvector_scan_16bit(predicate_low, predicate_high, data_start, num_records, result_start);
     }
 }
 

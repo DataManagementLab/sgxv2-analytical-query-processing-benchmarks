@@ -18,6 +18,11 @@
 
 constexpr char ENCLAVE_FILENAME[] = "simdmultienclave.signed.so";
 
+struct free_delete
+{
+    void operator()(void* x) { free(x); }
+};
+
 ConfigurationSpectrum create_configuration_spectrum() {
     return {from_string(FLAGS_enclave),
             from_string(FLAGS_preload),
@@ -65,11 +70,11 @@ int main(int argc, char *argv[]) {
     }
 
     auto need_data_array = !(global_config.use_enclave == Trinary::t && global_config.preload == Trinary::t);
-    std::unique_ptr<uint8_t[]> data;
+    std::unique_ptr<uint8_t[], free_delete> data;
     if (need_data_array) {
         logger("Allocating unencrypted scan data.");
         try {
-            data = allocate_data_array_aligned<uint8_t, 64>(num_total_entries);
+            data = std::unique_ptr<uint8_t[], free_delete>(reinterpret_cast<uint8_t *>(allocate_data_array_aligned<uint16_t, 64>(num_total_entries / 2)));
         } catch (const std::bad_alloc &e) {
             error("Allocation failed!");
             return -1;
@@ -79,12 +84,12 @@ int main(int argc, char *argv[]) {
 
     auto need_dict =
             std::find(global_config.modes.begin(), global_config.modes.end(), Mode::dict) != global_config.modes.end();
-    std::unique_ptr<int64_t[]> dict;
+    std::unique_ptr<int64_t[], free_delete> dict;
     if (need_dict) {
         logger("Allocating unencrypted dict.");
 
         try {
-            dict = allocate_data_array_aligned<int64_t, 64>(256);// TODO make dict size flexible
+            dict = std::unique_ptr<int64_t[], free_delete>(allocate_data_array_aligned<int64_t, 64>(256));// TODO make dict size flexible
         } catch (const std::bad_alloc &e) {
             error("Allocation failed!");
             return -1;

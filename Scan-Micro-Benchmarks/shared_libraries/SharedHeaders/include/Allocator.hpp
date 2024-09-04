@@ -92,9 +92,9 @@ public:
 };
 
 template<typename T, int alignment=64>
-std::unique_ptr<T[]> allocate_data_array_aligned(size_t num_total_entries) {
+T* allocate_data_array_aligned(size_t num_total_entries) {
     static_assert(std::is_arithmetic_v<T>, "Data-Array can only be allocated for numeric types");
-    std::unique_ptr<T[]> data {new (std::align_val_t{alignment}) T[num_total_entries]};
+    T* data = static_cast<T*>(aligned_alloc(alignment, num_total_entries * sizeof(T)));
     if constexpr (std::is_same_v<uint8_t, T>) {
         std::array<uint8_t, 256> tmp {0};
         for (uint8_t i = 0; i < 255; ++i) {

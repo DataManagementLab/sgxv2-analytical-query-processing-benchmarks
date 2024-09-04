@@ -42,17 +42,17 @@ run_bitvector_scan(const uint8_t *data, uint64_t start_idx, ScanResults &results
             }
         }
     } else {
-        auto result_start = reinterpret_cast<__mmask64 *>(results.bitvector_results.data() + output_idx);
+        auto result_start = reinterpret_cast<__mmask32 *>(results.bitvector_results.data() + output_idx);
 
         for (auto i = 0; i < config.read_config.num_warmup_runs; ++i) {
-            SIMD512::bitvector_scan(config.predicate_low, config.predicate_high,
+            SIMD512::bitvector_scan_16bit(config.predicate_low, config.predicate_high,
                                     reinterpret_cast<const __m512i *>(data), config.num_entries_per_thread,
                                     result_start);
         }
 
         rdtscpWrapper rdtscpWrap(&cpu_cycles_cntr);
         for (auto i = 0; i < config.read_config.num_runs; ++i) {
-            SIMD512::bitvector_scan(config.predicate_low, config.predicate_high,
+            SIMD512::bitvector_scan_16bit(config.predicate_low, config.predicate_high,
                                     reinterpret_cast<const __m512i *>(data), config.num_entries_per_thread,
                                     result_start);
         }

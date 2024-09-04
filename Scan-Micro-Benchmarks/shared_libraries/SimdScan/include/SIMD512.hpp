@@ -84,6 +84,10 @@ namespace SIMD512 {
                         __mmask64 *output_buffer);
 
     void
+    bitvector_scan_16bit(uint16_t predicate_low, uint16_t predicate_high, const __m512i *input_compressed,
+                   size_t input_size, __mmask32 *output_buffer);
+
+    void
     dict_scan_8bit_64bit(int64_t predicate_low,
                          int64_t predicate_high,
                          const int64_t *dict,

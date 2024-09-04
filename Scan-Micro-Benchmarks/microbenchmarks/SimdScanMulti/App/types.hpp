@@ -116,13 +116,13 @@ struct Configuration {
     bool include_join = false;
     bool pre_alloc = true;
 
-    uint8_t predicate_low = 0;
-    uint8_t predicate_high = 0;
+    uint16_t predicate_low = 0;
+    uint16_t predicate_high = 0;
     uint64_t num_entries_per_thread;
 
     Configuration()
         : read_config{true, 0, 1},
-          predicate_high{static_cast<uint8_t>(std::round((static_cast<double>(selectivity) / 100.0) * 255.0))},
+          predicate_high{static_cast<uint16_t>(std::round((static_cast<double>(selectivity) / 100.0) * 65535.0))},
           num_entries_per_thread{num_entries / num_threads} {}
 
     Configuration(bool enclave, bool preload, Mode mode, MultiReadConfiguration read_config, bool numa,
@@ -131,7 +131,7 @@ struct Configuration {
         : enclave(enclave), preload(preload), mode(mode), read_config(read_config), NUMA(numa),
           num_threads(num_threads), num_entries(num_entries), num_reruns(num_reruns), selectivity(selectivity),
           include_join(include_join), pre_alloc(pre_alloc),
-          predicate_high{static_cast<uint8_t>(std::round((static_cast<double>(selectivity) / 100.0) * 255.0))},
+          predicate_high{static_cast<uint16_t>(std::round((static_cast<double>(selectivity) / 100.0) * 65535.0))},
           num_entries_per_thread{num_entries / num_threads} {}
 };
 

@@ -221,6 +221,22 @@ namespace SIMD512 {
         }
     }
 
+    void
+    bitvector_scan_16bit(uint16_t predicate_low, uint16_t predicate_high, const __m512i *input_compressed,
+                   size_t input_size, __mmask32 *output_buffer) {
+        input_size = input_size / 2;
+
+        __m512i low = _mm512_set1_epi16(predicate_low);
+        __m512i high = _mm512_set1_epi16(predicate_high);
+
+        for (size_t i = 0; i < input_size / 32; ++i) {
+            __mmask32 mask_low = _mm512_cmpge_epu16_mask(input_compressed[i], low);
+            __mmask32 mask_high = _mm512_cmple_epu16_mask(input_compressed[i], high);
+            __mmask32 mask = mask_high & mask_low;
+            _store_mask32(output_buffer + i, mask);
+        }
+    }
+
 
     void implicit_index_scan(pred_t predicate_low, pred_t predicate_high, const __m512i *input_compressed,
                              size_t input_size, size_t *output_buffer) {
